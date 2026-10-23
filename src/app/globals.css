@@ -1,0 +1,266 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------------
+   Design tokens. Light workspace with a navy sidebar; dark mode below.
+   Status colours echo network-gear port lights (link / activity / fault).
+--------------------------------------------------------------------------- */
+:root {
+  --background: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --foreground: #14202f;
+  --muted: #5b6b80;
+  --subtle: #8a97a8;
+  --border: #e1e6ee;
+  --border-strong: #cdd5e0;
+  --ring: #2f5bea;
+
+  --accent: #2f5bea;
+  --accent-hover: #2449c9;
+  --accent-soft: #e9efff;
+  --accent-foreground: #ffffff;
+
+  --sidebar: #0e1b30;
+  --sidebar-2: #16273f;
+  --sidebar-foreground: #c6d1e1;
+  --sidebar-muted: #7f90a8;
+  --sidebar-active: #22385a;
+
+  --ok: #16a34a;
+  --ok-soft: #e7f6ec;
+  --warn: #d97706;
+  --warn-soft: #fdf3e3;
+  --danger: #dc2626;
+  --danger-soft: #fdecec;
+  --info: #0e7490;
+  --info-soft: #e3f4f7;
+
+  --code-bg: #0f1a2b;
+  --code-fg: #dbe5f3;
+
+  --shadow-panel: 0 1px 2px rgb(16 32 56 / 0.05), 0 1px 0 rgb(16 32 56 / 0.02);
+  --shadow-pop: 0 12px 32px -8px rgb(16 32 56 / 0.25), 0 2px 6px rgb(16 32 56 / 0.08);
+}
+
+.dark {
+  --background: #0b1424;
+  --surface: #111d31;
+  --surface-2: #0e192b;
+  --foreground: #e3e9f2;
+  --muted: #98a7bb;
+  --subtle: #6d7d93;
+  --border: #1f2e46;
+  --border-strong: #2b3d59;
+  --ring: #6c8cff;
+
+  --accent: #5b7ffb;
+  --accent-hover: #7593ff;
+  --accent-soft: #1a2a4f;
+  --accent-foreground: #ffffff;
+
+  --sidebar: #08111f;
+  --sidebar-2: #0f1b2e;
+  --sidebar-foreground: #c6d1e1;
+  --sidebar-muted: #6f819a;
+  --sidebar-active: #1a2b47;
+
+  --ok: #34c06a;
+  --ok-soft: #0f2a1d;
+  --warn: #f0a33a;
+  --warn-soft: #2e2210;
+  --danger: #f06262;
+  --danger-soft: #331618;
+  --info: #3cb4cc;
+  --info-soft: #0e2a33;
+
+  --code-bg: #070e1a;
+  --code-fg: #dbe5f3;
+
+  --shadow-panel: 0 1px 0 rgb(0 0 0 / 0.2);
+  --shadow-pop: 0 16px 40px -10px rgb(0 0 0 / 0.6);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-ring: var(--ring);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-2: var(--sidebar-2);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-code-bg: var(--code-bg);
+  --color-code-fg: var(--code-fg);
+  --shadow-panel: var(--shadow-panel);
+  --shadow-pop: var(--shadow-pop);
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.6;
+    cursor: pointer;
+  }
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Port-light indicator: the app's signature status element. */
+.led {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: currentColor;
+  box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 18%, transparent);
+  flex-shrink: 0;
+}
+.led-pulse {
+  animation: led-pulse 2.4s ease-in-out infinite;
+}
+@keyframes led-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 18%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 8%, transparent);
+  }
+}
+
+/* Rendered Markdown in notes and records */
+.prose-note {
+  line-height: 1.65;
+  max-width: 72ch;
+}
+.prose-note > * + * {
+  margin-top: 0.85em;
+}
+.prose-note h1 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 1.4em;
+}
+.prose-note h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-top: 1.4em;
+}
+.prose-note h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1.2em;
+}
+.prose-note ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+}
+.prose-note ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+}
+.prose-note li + li {
+  margin-top: 0.25em;
+}
+.prose-note a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose-note blockquote {
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  padding: 0.5rem 0.85rem;
+  border-radius: 0 6px 6px 0;
+}
+.prose-note :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.prose-note table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9em;
+}
+.prose-note th,
+.prose-note td {
+  border: 1px solid var(--border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+}
+.prose-note hr {
+  border-top: 1px solid var(--border);
+}
+
+/* Print: reports print as clean documents */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-area {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
