@@ -80,7 +80,39 @@ tested: up, down, up again, keeping workspaces and personal data.
 The production build (`next build && next start`) was driven in headless Chromium against a
 Supabase-compatible backend: the real migration on PostgreSQL 16, real PostgREST v12 (the data API
 Supabase runs), and a minimal GoTrue-compatible auth service issuing Supabase-style JWTs.
-**69 checks, all passing.** They include:
+**115 checks across five suites, all passing, with every migration applied** (latest run: 24 Oct 2026).
+
+### ITSM upgrade: multiple users and organisations (29 checks)
+
+Five people in separate browser sessions: an owner, a technician, a customer of client Alpha, a
+customer of client Beta, and the owner of an unrelated workspace.
+
+- **Setup**: owner creates an organisation, adds two clients, invites a technician from the Team page and
+  one customer per client; customers land in the branded portal for their own organisation.
+- **Configuration**: SLA target changed in settings and applied to new tickets; automation rule assigns
+  Printers tickets; technicians are kept out of Team and Workspace settings.
+- **Ticket lifecycle**: a customer raises a request in the portal, it's auto-assigned and the technician
+  is notified; internal note plus public reply; **the customer sees the reply but never the internal
+  note**; the customer's reply moves it back to In progress; resolving requires a summary, which the
+  customer then sees.
+- **Separation**: the other client's customer can't see or open the request ("Page not found");
+  customers are redirected away from every staff page; the staff CSV export refuses customers; the
+  unrelated workspace sees none of the tickets, clients, articles or notifications.
+- **Staff tools**: ticket logged on behalf of a customer; critical tickets get the 30-minute target;
+  board offers only allowed status moves; technicians close but can't reopen closed tickets, the owner
+  can; search by ticket number, priority filter, SLA sort.
+- **Knowledge base**: article drafted from a ticket, marked Public, linked back to the ticket and visible
+  to both clients' customers; a Private article is hidden from the owner and customers.
+- **Figures**: overview and reports totals match the saved tickets, including a client filter; CSV export
+  includes SLA results; deactivating a client hides it from new tickets but customers keep access to
+  existing ones.
+- **Personal workspace** unaffected; **phone layout**: 14 staff and portal pages checked at 390px on a
+  fresh load; **no browser errors** in any session.
+
+### Original features, re-run after the upgrade (86 checks)
+
+Everything below still passes. Two checks were updated for deliberate changes (the knowledge base
+menu item was renamed from Troubleshooting; team invitations moved to the Team page).
 
 - **Auth**: protected routes redirect to sign-in and return afterwards; client-side validation;
   sign-up, sign-in, wrong password, sign-out; email confirmation link; reused link rejected; password
@@ -108,6 +140,12 @@ Supabase runs), and a minimal GoTrue-compatible auth service issuing Supabase-st
 Bugs these tests found and fixed before release: demo data failed to load because bulk inserts sent
 `NULL` instead of column defaults; knowledge-base sections showed raw Markdown; the task table squeezed
 titles; the mobile dashboard overflowed the screen width.
+
+Bugs found by the upgrade's tests and fixed before handing over: a shared database check read a column
+that only one of its tables had (automation rules couldn't be saved); deleting a technician's or
+customer's account was blocked by ticket history; ticket history credited the customer for an
+automatic assignment; the ticket list and SLA settings made phones zoom the whole page out; the
+overview's activity feed ignored its filters.
 
 The browser harness isn't included in the repo because it depends on a local PostgREST binary and a
 bundled Chromium; the manual checklist below covers the same ground on a real Supabase project.
@@ -144,6 +182,17 @@ Run this on your own Supabase project locally, and again on the Vercel deploymen
 - [ ] Load demo data (items show a Demo badge), then remove it; your own items remain.
 - [ ] Export all data and open the JSON.
 - [ ] Toggle light/dark; reload and the choice is kept.
+
+### Service desk (after running the ticketing migration)
+- [ ] Create an organisation workspace, add two clients, invite a technician (Team) and one customer per client.
+- [ ] As a customer, raise a request in the portal; it appears in Tickets and the technician is notified.
+- [ ] Add an internal note and a public reply; the customer sees only the reply.
+- [ ] Sign in as the other client's customer: the request isn't listed and its URL shows "Page not found".
+- [ ] Try Open → Closed from the board: not offered. Resolve without a summary: refused.
+- [ ] As a technician, close a resolved ticket; you can't reopen it, an admin can.
+- [ ] Change an SLA target in Workspace settings; a new ticket of that priority uses it.
+- [ ] Mark an article Public; customers see it under Help articles. A Private one stays hidden.
+- [ ] Overview and Reports numbers match the tickets you created; CSV export downloads.
 
 ### Security
 - [ ] Create a second account in a private window: it sees none of the first account's data.
