@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { FilterBar } from "@/components/shared/filter-bar";
 import { EmptyState } from "@/components/shared/empty-state";
 import { WORKLOG_FIELDS } from "@/components/worklog/fields";
+import { Markdown } from "@/components/shared/markdown";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Work log" };
@@ -166,7 +167,7 @@ export default async function WorkLogPage({ searchParams }: { searchParams: Prom
                         {filled.map((f) => (
                           <div key={f.key} className={f.key === "tasks_performed" || f.key === "reflections" ? "md:col-span-2" : ""}>
                             <dt className="text-[12px] font-medium text-muted">{f.label}</dt>
-                            <dd className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{String(e[f.key])}</dd>
+                            <dd className="mt-1 text-sm"><Markdown breaks>{String(e[f.key])}</Markdown></dd>
                           </div>
                         ))}
                       </dl>

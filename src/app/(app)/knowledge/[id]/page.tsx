@@ -14,6 +14,7 @@ import { LedLabel } from "@/components/shared/led";
 import { TagList } from "@/components/shared/tag-list";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { Markdown } from "@/components/shared/markdown";
 
 export const metadata: Metadata = { title: "Troubleshooting record" };
 
@@ -90,7 +91,7 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
                       <CopyButton text={value} label="Copy commands" className="absolute right-2 top-2 bg-white/10 text-code-fg hover:bg-white/20" />
                     </div>
                   ) : (
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed">{value}</p>
+                    <Markdown breaks className="mt-1.5 text-sm">{value}</Markdown>
                   )}
                 </div>
               </li>

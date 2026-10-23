@@ -56,7 +56,7 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
   const sort = first(sp.sort) ?? "due";
 
   let query = supabase.from("tasks").select("*").limit(1000);
-  if (q) query = query.or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,completion_notes.ilike.%${q}%`);
+  if (q) query = query.or(`title.ilike."%${q}%",description.ilike."%${q}%",category.ilike."%${q}%",completion_notes.ilike."%${q}%"`);
   if (status && TASK_STATUSES.some((s) => s.value === status)) query = query.eq("status", status);
   if (priority && PRIORITIES.some((p) => p.value === priority)) query = query.eq("priority", priority);
   if (category) query = query.eq("category", category.slice(0, 60));
@@ -175,15 +175,15 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
           <>
             <p className="sr-only" role="status">{tasks.length} tasks shown</p>
             {/* Desktop table */}
-            <table className="hidden w-full text-sm md:table">
+            <table className="hidden w-full table-fixed text-sm md:table">
               <thead>
                 <tr className="border-b border-border text-left text-[12px] text-muted">
-                  <th className="w-10 py-2.5 pl-5" scope="col"><span className="sr-only">Done</span></th>
+                  <th className="w-12 py-2.5 pl-5" scope="col"><span className="sr-only">Done</span></th>
                   <th className="py-2.5 pr-3 font-medium" scope="col">Task</th>
-                  <th className="py-2.5 pr-3 font-medium" scope="col">Category</th>
-                  <th className="py-2.5 pr-3 font-medium" scope="col">Priority</th>
-                  <th className="py-2.5 pr-3 font-medium" scope="col">Due</th>
-                  <th className="py-2.5 pr-3 font-medium" scope="col">Status</th>
+                  <th className="w-36 py-2.5 pr-3 font-medium lg:w-40" scope="col">Category</th>
+                  <th className="w-24 py-2.5 pr-3 font-medium" scope="col">Priority</th>
+                  <th className="w-28 py-2.5 pr-3 font-medium" scope="col">Due</th>
+                  <th className="w-32 py-2.5 pr-3 font-medium" scope="col">Status</th>
                   <th className="w-12 py-2.5 pr-3" scope="col"><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
@@ -193,7 +193,7 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
                   return (
                     <tr key={t.id} className={late ? "bg-danger-soft/40" : "hover:bg-surface-2/60"}>
                       <td className="py-3 pl-5 align-top"><div className="pt-0.5"><CompleteToggle task={t} /></div></td>
-                      <td className="max-w-0 py-3 pr-3 align-top">
+                      <td className="py-3 pr-4 align-top">
                         <div className="flex items-center gap-2">
                           <EditTitleButton task={t} />
                           {t.is_demo && <DemoBadge />}
@@ -205,7 +205,7 @@ export default async function TasksPage({ searchParams }: { searchParams: SP }) 
                           </p>
                         )}
                       </td>
-                      <td className="py-3 pr-3 align-top text-[13px] text-muted">{t.category}</td>
+                      <td className="truncate py-3 pr-3 align-top text-[13px] text-muted">{t.category}</td>
                       <td className="py-3 pr-3 align-top"><PriorityMark priority={t.priority} /></td>
                       <td className={`py-3 pr-3 align-top text-[13px] whitespace-nowrap ${late ? "font-medium text-danger" : "text-muted"}`}>
                         {t.due_date ? (t.due_date === today ? "Today" : t.due_date === addDays(today, 1) ? "Tomorrow" : formatDate(t.due_date, profile.date_format)) : "—"}

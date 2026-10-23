@@ -5,8 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 DB="itec_rls_test_$$"
 createdb "$DB"
-trap 'dropdb --if-exists "$DB"; psql -d postgres -qc "drop role if exists anon; drop role if exists authenticated;" >/dev/null 2>&1 || true' EXIT
-psql -d postgres -qc "drop role if exists anon; drop role if exists authenticated;" >/dev/null 2>&1 || true
+trap 'dropdb --if-exists "$DB"' EXIT
 psql -d "$DB" -q -v ON_ERROR_STOP=1 -f supabase/tests/auth_stub.sql
 for f in supabase/migrations/*.sql; do
   psql -d "$DB" -q -v ON_ERROR_STOP=1 -f "$f"

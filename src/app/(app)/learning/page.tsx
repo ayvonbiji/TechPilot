@@ -92,7 +92,7 @@ export default async function LearningPage({ searchParams }: { searchParams: Pro
             <p className="text-sm font-semibold tabular-nums">{overall.pct}%</p>
           </div>
           <Progress className="mt-2 h-2" value={overall.current} max={Math.max(overall.target, 1)} label="Overall skill progress" />
-          <p className="mt-2 text-[12px] text-muted">{overall.current} of {overall.target} target levels reached across {all.length - certs.length} skills</p>
+          <p className="mt-2 text-[12px] text-muted">{overall.current} of {overall.target} target levels reached across {all.length - certs.length} skill{all.length - certs.length === 1 ? "" : "s"}</p>
         </div>
         <dl className="grid grid-cols-5 gap-4 text-center">
           {SKILL_STATUSES.map((st) => (

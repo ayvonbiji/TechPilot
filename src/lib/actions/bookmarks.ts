@@ -49,7 +49,7 @@ export async function addStarterResources(): Promise<ActionResult> {
   const have = new Set((existing ?? []).map((b: { url: string }) => b.url));
   const rows = STARTER_RESOURCES.filter((r) => !have.has(r.url)).map((r) => ({ ...r, user_id: a.user.id }));
   if (!rows.length) return { ok: true, message: "You already have all the recommended links." };
-  const { error } = await a.supabase.from("bookmarks").insert(rows);
+  const { error } = await a.supabase.from("bookmarks").insert(rows, { defaultToNull: false });
   if (error) return dbFail(error);
   revalidatePath("/resources");
   return { ok: true, message: `Added ${rows.length} recommended links` };

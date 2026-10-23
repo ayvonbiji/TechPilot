@@ -150,7 +150,7 @@ export default async function DashboardPage() {
         </ul>
       </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] [&>*]:min-w-0">
         <Panel>
           <PanelHeader
             title="Today's focus"

@@ -51,12 +51,12 @@ export async function loadDemoData(): Promise<ActionResult> {
   const taken = new Set((existingLogs ?? []).map((l: { log_date: string }) => l.log_date));
 
   const results = await Promise.all([
-    a.supabase.from("tasks").insert(own(demo.tasks)),
-    a.supabase.from("troubleshooting_records").insert(own(demo.records)),
-    a.supabase.from("notes").insert(own(demo.notes)),
-    a.supabase.from("skills").insert(own(demo.skills)),
+    a.supabase.from("tasks").insert(own(demo.tasks), { defaultToNull: false }),
+    a.supabase.from("troubleshooting_records").insert(own(demo.records), { defaultToNull: false }),
+    a.supabase.from("notes").insert(own(demo.notes), { defaultToNull: false }),
+    a.supabase.from("skills").insert(own(demo.skills), { defaultToNull: false }),
     demo.logs.some((l) => !taken.has(l.log_date))
-      ? a.supabase.from("work_logs").insert(own(demo.logs.filter((l) => !taken.has(l.log_date))))
+      ? a.supabase.from("work_logs").insert(own(demo.logs.filter((l) => !taken.has(l.log_date))), { defaultToNull: false })
       : Promise.resolve({ error: null }),
   ]);
   const failed = results.find((r) => r.error);

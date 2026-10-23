@@ -75,7 +75,7 @@ export async function importCommandLibrary(): Promise<ActionResult<{ added: numb
     category: "Command reference",
   }));
   if (!rows.length) return { ok: true, data: { added: 0 }, message: "The command library is already in your notes." };
-  const { error } = await a.supabase.from("notes").insert(rows);
+  const { error } = await a.supabase.from("notes").insert(rows, { defaultToNull: false });
   if (error) return dbFail(error, "Couldn't import the library. Try again.");
   refresh();
   return { ok: true, data: { added: rows.length }, message: `Added ${rows.length} command reference notes` };

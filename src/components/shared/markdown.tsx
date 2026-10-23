@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { CopyButton } from "./copy-button";
 import { cn } from "@/lib/utils";
 
@@ -16,12 +17,13 @@ function textOf(node: React.ReactNode): string {
  * Renders user Markdown safely: raw HTML is not rendered (react-markdown's default),
  * links open in a new tab, and every code block gets a copy button.
  * Code is display-only — nothing here executes commands.
+ * `breaks` keeps single line breaks, for fields people type as plain lines.
  */
-export function Markdown({ children, className }: { children: string; className?: string }) {
+export function Markdown({ children, className, breaks }: { children: string; className?: string; breaks?: boolean }) {
   return (
     <div className={cn("prose-note", className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={breaks ? [remarkGfm, remarkBreaks] : [remarkGfm]}
         components={{
           a: ({ href, children }) => (
             <a href={href} target="_blank" rel="noopener noreferrer nofollow">
