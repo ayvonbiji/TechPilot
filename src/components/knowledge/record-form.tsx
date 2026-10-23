@@ -160,7 +160,7 @@ export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
         </Panel>
       </div>
 
-      <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+      <aside className="space-y-4">
         {!record && (
           <Panel>
             <PanelHeader title="Template" />
@@ -183,7 +183,7 @@ export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
             </PanelBody>
           </Panel>
         )}
-        <Panel>
+        <Panel className="lg:sticky lg:top-20">
           <PanelBody className="space-y-4">
             <Field label="Tags" htmlFor="tags" hint="Comma-separated, e.g. dns, wifi, driver" error={fieldErrors.tags}>
               <Input id="tags" value={values.tags} onChange={set("tags")} {...errorProps("tags", fieldErrors.tags)} />

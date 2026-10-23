@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { NAV_GROUPS, SETTINGS_ITEM, type NavItem } from "./nav-items";
+import { navFor, SETTINGS_ITEM, type NavItem } from "./nav-items";
+import { WorkspaceSwitcher, type SwitcherWorkspace } from "./workspace-switcher";
 import { cn } from "@/lib/utils";
 
 function Brand() {
@@ -46,12 +47,24 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
   );
 }
 
-export function SidebarContent({ onNavigate, footer }: { onNavigate?: () => void; footer?: React.ReactNode }) {
+export interface SidebarProps {
+  workspaces: SwitcherWorkspace[];
+  currentId: string;
+  onNavigate?: () => void;
+  footer?: React.ReactNode;
+}
+
+export function SidebarContent({ workspaces, currentId, onNavigate, footer }: SidebarProps) {
+  const current = workspaces.find((w) => w.id === currentId) ?? workspaces[0];
+  const groups = navFor(current.type, current.role);
   return (
     <div className="flex h-full flex-col bg-sidebar px-3 py-4">
       <Brand />
-      <nav className="mt-6 flex-1 space-y-5 overflow-y-auto" aria-label="Main">
-        {NAV_GROUPS.map((g) => (
+      <div className="mt-5">
+        <WorkspaceSwitcher workspaces={workspaces} currentId={current.id} />
+      </div>
+      <nav className="mt-5 flex-1 space-y-5 overflow-y-auto" aria-label="Main">
+        {groups.map((g) => (
           <div key={g.label}>
             <p className="px-3 pb-1.5 text-[12px] font-medium text-sidebar-muted">{g.label}</p>
             <div className="space-y-0.5">

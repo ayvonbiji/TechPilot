@@ -61,21 +61,21 @@ export async function loadDemoData(): Promise<ActionResult> {
   ]);
   const failed = results.find((r) => r.error);
   if (failed?.error) {
-    await removeDemoRows(a.supabase);
+    await removeDemoRows(a.supabase, a.user.id);
     return dbFail(failed.error, "Couldn't load demo data. Try again.");
   }
   revalidatePath("/", "layout");
   return { ok: true, message: "Demo data loaded. Look for the Demo badge." };
 }
 
-async function removeDemoRows(supabase: SupabaseClient) {
-  return Promise.all(DEMO_TABLES.map((t) => supabase.from(t).delete().eq("is_demo", true)));
+async function removeDemoRows(supabase: SupabaseClient, userId: string) {
+  return Promise.all(DEMO_TABLES.map((t) => supabase.from(t).delete().eq("is_demo", true).eq("user_id", userId)));
 }
 
 export async function removeDemoData(): Promise<ActionResult> {
   const a = await authed();
   if ("error" in a) return a.error!;
-  const results = await removeDemoRows(a.supabase);
+  const results = await removeDemoRows(a.supabase, a.user.id);
   const failed = results.find((r) => r.error);
   if (failed?.error) return dbFail(failed.error, "Couldn't remove all demo data. Try again.");
   revalidatePath("/", "layout");
@@ -87,6 +87,7 @@ export async function deleteAccount(confirmation: string): Promise<ActionResult>
   const a = await authed();
   if ("error" in a) return a.error!;
   const { error } = await a.supabase.rpc("delete_own_account");
+  if (error?.code === "22023") return { ok: false, error: error.message };
   if (error) return dbFail(error, "Couldn't delete the account. Try again, or contact support for your Supabase project.");
   await a.supabase.auth.signOut();
   redirect("/login?message=deleted");

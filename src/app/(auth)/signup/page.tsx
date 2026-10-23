@@ -3,6 +3,7 @@ import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = { title: "Create account" };
 
-export default function SignupPage() {
-  return <SignupForm />;
+export default async function SignupPage({ searchParams }: { searchParams: Promise<{ next?: string; email?: string }> }) {
+  const { next, email } = await searchParams;
+  return <SignupForm next={next} email={email} />;
 }

@@ -15,7 +15,7 @@ export async function loadReport(kind: "daily" | "weekly", start: string, end: s
     supabase.from("tasks").select("title,due_date,status").neq("status", "completed").lte("due_date", end).order("due_date"),
     supabase.from("tasks").select("created_at").gte("created_at", from).lt("created_at", to),
     supabase.from("work_logs").select("*").gte("log_date", start).lte("log_date", end),
-    supabase.from("troubleshooting_records").select("title,category,status,created_at").gte("created_at", from).lt("created_at", to).order("created_at"),
+    supabase.from("troubleshooting_records").select("title,category,status,created_at").eq("user_id", profile.id).gte("created_at", from).lt("created_at", to).order("created_at"),
     supabase.from("skills").select("name,kind,completed_on").eq("status", "completed").gte("completed_on", start).lte("completed_on", end),
   ]);
 

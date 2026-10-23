@@ -10,8 +10,8 @@ import { useActionForm } from "@/components/shared/use-action-form";
 import { signUp } from "@/lib/actions/auth";
 import { signUpSchema } from "@/lib/validation/schemas";
 
-export function SignupForm() {
-  const [values, setValues] = useState({ displayName: "", email: "", password: "" });
+export function SignupForm({ next, email }: { next?: string; email?: string }) {
+  const [values, setValues] = useState({ displayName: "", email: email ?? "", password: "" });
   const [sentTo, setSentTo] = useState<string | null>(null);
   const { pending, fieldErrors, formError, submit } = useActionForm(signUpSchema);
   const set = (k: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -42,7 +42,7 @@ export function SignupForm() {
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
-          submit(values, signUp, { onSuccess: () => setSentTo(values.email.trim()) });
+          submit(values, (input) => signUp(input, next), { onSuccess: () => setSentTo(values.email.trim()) });
         }}
       >
         <FormError message={formError} />
@@ -61,7 +61,7 @@ export function SignupForm() {
       </form>
       <p className="mt-6 text-center text-sm text-muted">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-accent hover:underline">
+        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="font-medium text-accent hover:underline">
           Sign in
         </Link>
       </p>

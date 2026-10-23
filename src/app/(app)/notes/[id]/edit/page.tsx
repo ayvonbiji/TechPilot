@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
+import { requireStaff } from "@/lib/workspace";
 import type { Note } from "@/lib/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { NoteForm } from "@/components/notes/note-form";
@@ -13,11 +14,12 @@ export const metadata: Metadata = { title: "Edit note" };
 export default async function EditNotePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await requireUser();
+  const { workspace } = await requireStaff();
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
   const [{ data }, cats] = await Promise.all([
     supabase.from("notes").select("*").eq("id", id).maybeSingle(),
-    supabase.from("notes").select("category").limit(2000),
+    supabase.from("notes").select("category").eq("workspace_id", workspace.id).limit(2000),
   ]);
   if (!data) notFound();
   const categories = Array.from(new Set((cats.data ?? []).map((c: { category: string }) => c.category)));

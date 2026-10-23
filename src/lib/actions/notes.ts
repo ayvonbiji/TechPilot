@@ -6,6 +6,7 @@ import { validate } from "@/lib/validation/common";
 import { COMMAND_LIBRARY } from "@/lib/command-library";
 import type { ActionResult } from "@/lib/types";
 import { authed, dbFail, invalid, isUuid } from "./helpers";
+import { getCurrentMembership, isStaffRole } from "@/lib/workspace";
 
 function refresh(id?: string) {
   revalidatePath("/notes");
@@ -18,7 +19,13 @@ export async function createNote(input: unknown): Promise<ActionResult<{ id: str
   if (!v.success) return invalid(v.fieldErrors);
   const a = await authed();
   if ("error" in a) return a.error!;
-  const { data, error } = await a.supabase.from("notes").insert({ ...v.data, user_id: a.user.id }).select("id").single();
+  const m = await getCurrentMembership();
+  if (!isStaffRole(m.role)) return { ok: false, error: "You can't add notes in this workspace." };
+  const { data, error } = await a.supabase
+    .from("notes")
+    .insert({ ...v.data, user_id: a.user.id, workspace_id: m.workspace.id })
+    .select("id")
+    .single();
   if (error || !data) return dbFail(error);
   refresh();
   return { ok: true, data: { id: data.id }, message: "Note saved" };
@@ -61,14 +68,18 @@ export async function deleteNote(id: string): Promise<ActionResult> {
 export async function importCommandLibrary(): Promise<ActionResult<{ added: number }>> {
   const a = await authed();
   if ("error" in a) return a.error!;
+  const m = await getCurrentMembership();
+  if (!isStaffRole(m.role)) return { ok: false, error: "You can't add notes in this workspace." };
   const { data: existing, error: readError } = await a.supabase
     .from("notes")
     .select("title")
+    .eq("workspace_id", m.workspace.id)
     .eq("category", "Command reference");
   if (readError) return dbFail(readError, "Couldn't import the library. Try again.");
   const have = new Set((existing ?? []).map((n: { title: string }) => n.title));
   const rows = COMMAND_LIBRARY.filter((c) => !have.has(c.title)).map((c) => ({
     user_id: a.user.id,
+    workspace_id: m.workspace.id,
     title: c.title,
     content: c.content,
     tags: c.tags,

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, CalendarClock, GraduationCap, ListChecks, NotebookPen, Plus, SquareTerminal, Wrench } from "lucide-react";
 import { getProfile, requireUser } from "@/lib/auth";
+import { requireStaff } from "@/lib/workspace";
 import { createClient } from "@/lib/supabase/server";
 import { addDays, formatDate, greetingFor, localDateOf, longDate, shortDay, todayIn, utcRangeForDates, weekRange } from "@/lib/dates";
 import { labelFor, SKILL_STATUSES } from "@/lib/constants";
@@ -20,6 +21,7 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   await requireUser();
   const profile = await getProfile();
+  const { workspace } = await requireStaff();
   const tz = profile.timezone;
   const today = todayIn(tz);
   const weekStart = addDays(today, -6);
@@ -38,6 +40,7 @@ export default async function DashboardPage() {
     supabase
       .from("troubleshooting_records")
       .select("id,title,category,status,created_at,is_demo")
+      .eq("workspace_id", workspace.id)
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.from("work_logs").select("log_date").gte("log_date", weekStart).lte("log_date", today),
@@ -47,7 +50,7 @@ export default async function DashboardPage() {
       .neq("status", "not_started")
       .order("updated_at", { ascending: false })
       .limit(5),
-    supabase.from("notes").select("id", { count: "exact", head: true }),
+    supabase.from("notes").select("id", { count: "exact", head: true }).eq("workspace_id", workspace.id),
   ]);
 
   const loadError = [openRes, doneRes, kbRes, logsRes, skillsRes].find((r) => r.error);
@@ -76,7 +79,7 @@ export default async function DashboardPage() {
   });
   const weekTotal = chart.reduce((n, d) => n + d.completed, 0);
 
-  const isNew = open.length === 0 && (doneTotalRes.count ?? 0) === 0 && records.length === 0 && (notesCountRes.count ?? 0) === 0;
+  const isNew = workspace.type === "personal" && open.length === 0 && (doneTotalRes.count ?? 0) === 0 && records.length === 0 && (notesCountRes.count ?? 0) === 0;
   const firstName = profile.display_name.split(" ")[0];
 
   const stats = [

@@ -11,7 +11,9 @@ export async function GET() {
   const supabase = await createClient();
 
   const results = await Promise.all(
-    TABLES.map((t) => supabase.from(t).select("*").limit(10000)),
+    TABLES.map((t) =>
+      t === "profiles" ? supabase.from(t).select("*").limit(1) : supabase.from(t).select("*").eq("user_id", user.id).limit(10000),
+    ),
   );
   const failed = results.find((r) => r.error);
   if (failed) return NextResponse.json({ error: "Export failed. Try again." }, { status: 500 });
@@ -22,6 +24,11 @@ export async function GET() {
     exported_at: new Date().toISOString(),
     account_email: user.email,
   };
+  const { data: memberships } = await supabase
+    .from("workspace_members")
+    .select("role, joined_at, workspaces(name, type)")
+    .eq("user_id", user.id);
+  data.workspace_memberships = memberships ?? [];
   TABLES.forEach((t, i) => {
     // Generated search vectors aren't useful outside the database.
     data[t] = (results[i].data ?? []).map((row: Record<string, unknown>) => {
