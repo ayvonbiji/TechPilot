@@ -45,44 +45,52 @@ function RowEditor({ row, clientId, canEdit }: { row: SlaRow; clientId: string |
   const [res, setRes] = useState(split(effective.resolution));
   const [pending, start] = useTransition();
   const toMin = (v: { amount: string; unit: Unit }) => (v.amount === "" ? null : Number(v.amount) * FACTOR[v.unit]);
+  const id = `${row.priority}-${clientId ?? "ws"}`;
+  const label = priorityLabel(row.priority);
 
   return (
-    <tr className="align-middle">
-      <th scope="row" className="py-2.5 pl-4 pr-3 text-left text-[13px] font-medium">{priorityLabel(row.priority)}</th>
+    <li data-priority={row.priority} className="grid gap-x-4 gap-y-2 px-4 py-3 sm:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
+      <span className="text-[13px] font-medium">{label}</span>
       {editing ? (
         <>
-          <td className="py-2 pr-3"><DurationInput id={`fr-${row.priority}-${clientId ?? "ws"}`} label={`${priorityLabel(row.priority)} first response`} value={first} onChange={setFirst} /></td>
-          <td className="py-2 pr-3"><DurationInput id={`rs-${row.priority}-${clientId ?? "ws"}`} label={`${priorityLabel(row.priority)} resolution`} value={res} onChange={setRes} /></td>
-          <td className="py-2 pr-4 text-right">
-            <div className="flex justify-end gap-1">
-              <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
-              <Button
-                size="sm"
-                disabled={pending}
-                onClick={() =>
-                  start(async () => {
-                    const r = await saveSlaTarget(clientId, { priority: row.priority, first_response_minutes: toMin(first), resolution_minutes: toMin(res) });
-                    if (r.ok) {
-                      toast.success(r.message ?? "Saved");
-                      setEditing(false);
-                    } else toast.error(r.error);
-                  })
-                }
-              >
-                Save
-              </Button>
-            </div>
-          </td>
+          <div>
+            <span className="mb-1 block text-[12px] text-muted sm:hidden">First response</span>
+            <DurationInput id={`fr-${id}`} label={`${label} first response`} value={first} onChange={setFirst} />
+          </div>
+          <div>
+            <span className="mb-1 block text-[12px] text-muted sm:hidden">Resolution</span>
+            <DurationInput id={`rs-${id}`} label={`${label} resolution`} value={res} onChange={setRes} />
+          </div>
+          <div className="flex gap-1 sm:justify-end">
+            <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={pending}
+              onClick={() =>
+                start(async () => {
+                  const r = await saveSlaTarget(clientId, { priority: row.priority, first_response_minutes: toMin(first), resolution_minutes: toMin(res) });
+                  if (r.ok) {
+                    toast.success(r.message ?? "Saved");
+                    setEditing(false);
+                  } else toast.error(r.error);
+                })
+              }
+            >
+              Save
+            </Button>
+          </div>
         </>
       ) : (
         <>
-          <td className="py-2.5 pr-3 text-[13px]">{formatMinutes(effective.first)}</td>
-          <td className="py-2.5 pr-3 text-[13px]">{formatMinutes(effective.resolution)}</td>
-          <td className="py-2.5 pr-4 text-right text-[12px]">
-            {clientId && (row.override ? <span className="mr-2 text-accent">Client override</span> : <span className="mr-2 text-subtle">Workspace default</span>)}
+          <span className="text-[13px]"><span className="text-muted sm:hidden">First response: </span>{formatMinutes(effective.first)}</span>
+          <span className="text-[13px]"><span className="text-muted sm:hidden">Resolution: </span>{formatMinutes(effective.resolution)}</span>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:justify-end">
+            {clientId && (row.override ? <span className="text-accent">Client override</span> : <span className="text-subtle">Workspace default</span>)}
             {canEdit && (
               <span className="inline-flex gap-1">
-                <Button size="sm" variant="ghost" onClick={() => setEditing(true)}>{clientId && !row.override ? "Override" : "Edit"}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditing(true)} aria-label={`${clientId && !row.override ? "Override" : "Edit"} ${label} targets`}>
+                  {clientId && !row.override ? "Override" : "Edit"}
+                </Button>
                 {clientId && row.override && (
                   <Button
                     size="sm"
@@ -101,32 +109,28 @@ function RowEditor({ row, clientId, canEdit }: { row: SlaRow; clientId: string |
                 )}
               </span>
             )}
-          </td>
+          </span>
         </>
       )}
-    </tr>
+    </li>
   );
 }
 
-/** SLA targets per priority, for the workspace (clientId null) or one client. */
+/** SLA targets per priority, for the workspace (clientId null) or one client. Wraps on narrow screens. */
 export function SlaEditor({ rows, clientId, canEdit }: { rows: SlaRow[]; clientId: string | null; canEdit: boolean }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] text-sm">
-        <thead>
-          <tr className="border-b border-border text-left text-[12px] text-muted">
-            <th scope="col" className="py-2 pl-4 pr-3 font-medium">Priority</th>
-            <th scope="col" className="py-2 pr-3 font-medium">First response</th>
-            <th scope="col" className="py-2 pr-3 font-medium">Resolution</th>
-            <th scope="col" className="py-2 pr-4"><span className="sr-only">Actions</span></th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((r) => (
-            <RowEditor key={`${r.priority}-${r.override?.first}-${r.override?.resolution}-${r.base.first}-${r.base.resolution}`} row={r} clientId={clientId} canEdit={canEdit} />
-          ))}
-        </tbody>
-      </table>
+    <div>
+      <div className="hidden border-b border-border px-4 py-2 text-[12px] text-muted sm:grid sm:grid-cols-[96px_minmax(0,1fr)_minmax(0,1fr)_auto] sm:gap-x-4" aria-hidden>
+        <span>Priority</span>
+        <span>First response</span>
+        <span>Resolution</span>
+        <span />
+      </div>
+      <ul className="divide-y divide-border" aria-label="SLA targets by priority">
+        {rows.map((r) => (
+          <RowEditor key={`${r.priority}-${r.override?.first}-${r.override?.resolution}-${r.base.first}-${r.base.resolution}`} row={r} clientId={clientId} canEdit={canEdit} />
+        ))}
+      </ul>
     </div>
   );
 }

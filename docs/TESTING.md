@@ -5,7 +5,13 @@ own Supabase project and after each deployment.
 
 ## 1. Unit tests — `npm test`
 
-26 tests in `tests/unit/` covering the pure logic everything else depends on:
+43 tests in `tests/unit/` covering the pure logic everything else depends on:
+
+- **Ticket workflow**: allowed and blocked status changes, mirroring the database rules; who may reopen.
+- **SLA states**: no target, on track, due soon (last 25%, at least 15 minutes), overdue, met, missed,
+  from stored timestamps only; target formatting.
+- **Service metrics**: compliance counts only targets with a known result; averages; queue; grouping by
+  priority and technician; created/resolved per local day, week and month.
 
 - **Dates and time zones**: calendar validation, month/year rollover, Monday-to-Sunday weeks, local
   midnight in UTC for India, London summer and winter time, invalid-zone fallback, every date format.
@@ -34,6 +40,40 @@ Supabase's `auth` schema) and checks:
 | Rows can't be reassigned to another user | Pass |
 | Anonymous role has no table access and can't call account deletion | Pass |
 | Account deletion removes only the caller's data, across every table | Pass |
+
+### Workspaces and ticketing (`rls_workspaces_test.sql`, `rls_ticketing_test.sql`)
+
+Run on a database that already contains data from before the upgrade, so the migrations are tested
+against real old rows. The ticketing suite uses one organisation with an owner, two technicians, two
+customers of different clients, a second workspace and an outsider:
+
+| Check | Result |
+|---|---|
+| Existing users and records are backfilled without loss; legacy users keep access | Pass |
+| Invitations are hashed, single-use, bound to the invited email; roles can't be escalated | Pass |
+| New workspaces get default SLA targets | Pass |
+| Tickets get unique per-workspace numbers (`NW-00001`), always start Open, get SLA deadlines | Pass |
+| Customers can only raise tickets for their own organisation; staff-only fields are ignored | Pass |
+| Organisations, clients, other workspaces and outsiders can't see each other's tickets | Pass |
+| **Internal notes are invisible to customers**, and customers can't write them | Pass |
+| Customers see public history but not assignment changes | Pass |
+| Comments can't be edited or deleted; tickets can't be deleted | Pass |
+| Status changes follow the workflow; resolving needs a summary; only admins reopen closed tickets | Pass |
+| Ticket number, workspace, creator and timestamps can't be changed | Pass |
+| A customer reply reopens a resolved ticket; customers can't change tickets | Pass |
+| Notifications reach the right people, never the person who acted, never another user | Pass |
+| SLA breaches are recorded and alerted once, however often the sweep runs | Pass |
+| Client SLA overrides and priority changes recalculate deadlines; only admins edit targets | Pass |
+| Automation assigns and notifies; history credits the rule; only admins manage rules | Pass |
+| Knowledge base visibility: Private (author only), Team (staff), Public (that workspace's customers, never outsiders) | Pass |
+| Tickets can only link articles from their own workspace | Pass |
+| Client-technician assignments are admin-only and audited | Pass |
+| Platform overview is limited to platform owners | Pass |
+| Ticket creation is rate-limited (60 per user per hour) | Pass |
+| Deleting a technician or a customer keeps tickets and history; deleting a workspace removes only its data | Pass |
+
+**44 database checks in total, all passing.** The ticketing migration's rollback script was also
+tested: up, down, up again, keeping workspaces and personal data.
 
 ## 3. End-to-end browser tests
 

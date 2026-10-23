@@ -559,7 +559,8 @@ begin
   new.workspace_id := old.workspace_id;
   new.number := old.number;
   new.reference := old.reference;
-  new.created_by := old.created_by;
+  -- The creator can be cleared (their account was deleted) but never changed.
+  new.created_by := case when new.created_by is null then null else old.created_by end;
   new.created_at := old.created_at;
 
   if not system_change then

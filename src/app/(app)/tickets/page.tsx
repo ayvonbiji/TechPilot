@@ -192,7 +192,27 @@ export default async function TicketsPage({ searchParams }: { searchParams: SP }
           ) : (
             <>
               <p className="sr-only" role="status">{total} tickets</p>
-              <div className="overflow-x-auto">
+              {/* Phones: cards. A wide table makes mobile browsers zoom the whole page out. */}
+              <ul className="divide-y divide-border md:hidden">
+                {tickets.map((t) => (
+                  <li key={t.id}>
+                    <Link href={`/tickets/${t.id}`} className="block px-4 py-3 hover:bg-surface-2">
+                      <span className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-[12px] text-muted">{t.reference}</span>
+                        <SlaChip ticket={t} />
+                      </span>
+                      <span className="mt-0.5 block font-medium">{t.subject}</span>
+                      <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted">
+                        <TicketStatusLabel status={t.status} />
+                        <TicketPriorityLabel priority={t.priority} />
+                        <span>{t.assignee_id ? names[t.assignee_id] ?? "Former member" : "Unassigned"}</span>
+                        {t.client_id && clientNames[t.client_id] && <span>{clientNames[t.client_id]}</span>}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full min-w-[860px] table-fixed text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-[12px] text-muted">

@@ -410,7 +410,28 @@ do $$ begin
   assert exists (select 1 from public.ticket_events where ticket_id = pg_temp.v('t2') and kind = 'assignee'), 'history kept';
   raise notice 'PASS deleting a technician''s account unassigns their tickets and keeps history';
 end $$;
+-- A customer who raised tickets and replied can still delete their account;
+-- the tickets and conversation stay with the organisation.
 set role authenticated;
+select pg_temp.act('e0000000-0000-0000-0000-00000000000d');
+select public.delete_own_account();
+reset role;
+select pg_temp.act('');
+do $$ begin
+  assert not exists (select 1 from auth.users where id = 'e0000000-0000-0000-0000-00000000000d'), 'customer account deleted';
+  assert (select created_by from public.tickets where id = pg_temp.v('t3')) is null, 'creator cleared';
+  assert (select requester_name from public.tickets where id = pg_temp.v('t3')) = 'Cara Alpha', 'requester name kept for the record';
+  assert exists (select 1 from public.ticket_comments where ticket_id = pg_temp.v('t1') and author_name = 'Cara Alpha'), 'customer replies kept';
+  raise notice 'PASS deleting a customer who raised tickets keeps the tickets and conversation';
+end $$;
+-- Created_by can't be reassigned by staff.
+set role authenticated;
+select pg_temp.act('e0000000-0000-0000-0000-00000000000a');
+do $$ begin
+  perform pg_temp.expect_fail(format($f$update public.tickets set created_by = 'e0000000-0000-0000-0000-00000000000a' where id = %L$f$, pg_temp.v('t2')),
+    array['42501'], 'reassigning a ticket''s creator');
+end $$;
+
 select pg_temp.act('e0000000-0000-0000-0000-00000000000f');
 insert into public.clients (workspace_id, name) values (pg_temp.v('ws2'), 'Gamma') returning id as gamma \gset
 insert into public.tickets (workspace_id, subject, client_id) values (pg_temp.v('ws2'), 'Gamma issue', :'gamma');
