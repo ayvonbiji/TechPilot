@@ -34,7 +34,13 @@ export const getMemberships = cache(async (): Promise<Membership[]> => {
     .from("workspace_members")
     .select("role, client_id, workspaces(id, type, name, ticket_prefix, brand_color, logo_url, created_at)")
     .eq("user_id", user.id);
-  if (error) throw new Error("Couldn't load your workspaces");
+  if (error) {
+    // The app is newer than the database: the workspace migration hasn't been run.
+    // PGRST205 = table missing, PGRST200 = relationship missing (PostgREST schema cache); 42P01 = undefined table.
+    if (["PGRST200", "PGRST205", "42P01"].includes(error.code)) redirect("/setup?reason=database-update");
+    console.error("[workspaces]", error.code, error.message);
+    throw new Error("Couldn't load your workspaces");
+  }
   const order: Record<WorkspaceType, number> = { personal: 0, freelance: 1, organisation: 2 };
   return (data ?? [])
     .filter((m) => m.workspaces)
