@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { getProfile, requireUser } from "@/lib/auth";
+import { getCurrentMembership, getMemberships, isStaffRole } from "@/lib/workspace";
 import { SidebarContent } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ThemeSync, ThemeToggle } from "@/components/layout/theme-toggle";
@@ -6,7 +8,17 @@ import { UserMenu } from "@/components/layout/user-menu";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
-  const profile = await getProfile();
+  const [profile, memberships, current] = await Promise.all([getProfile(), getMemberships(), getCurrentMembership()]);
+  // Client users work in the simplified client portal, never in the staff app.
+  if (!isStaffRole(current.role)) redirect("/portal");
+  const workspaces = memberships.map((m) => ({
+    id: m.workspace.id,
+    name: m.workspace.name,
+    type: m.workspace.type,
+    role: m.role,
+    brand_color: m.workspace.brand_color,
+    logo_url: m.workspace.logo_url,
+  }));
 
   return (
     <div className="min-h-dvh lg:pl-64">
@@ -17,10 +29,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         Skip to content
       </a>
       <aside className="no-print fixed inset-y-0 left-0 hidden w-64 lg:block">
-        <SidebarContent />
+        <SidebarContent workspaces={workspaces} currentId={current.workspace.id} />
       </aside>
       <header className="no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6 lg:px-8">
-        <MobileNav />
+        <MobileNav workspaces={workspaces} currentId={current.workspace.id} />
         <div className="flex-1" />
         <ThemeToggle />
         <UserMenu name={profile.display_name} email={user.email} />

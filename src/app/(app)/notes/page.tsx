@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Plus, SquareTerminal, Star } from "lucide-react";
 import { getProfile } from "@/lib/auth";
+import { requireStaff } from "@/lib/workspace";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, localDateOf } from "@/lib/dates";
 import { first, sanitizeSearch, truncate } from "@/lib/utils";
@@ -32,6 +33,7 @@ function excerpt(md: string) {
 export default async function NotesPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const profile = await getProfile();
+  const { workspace } = await requireStaff();
   const supabase = await createClient();
   const q = sanitizeSearch(first(sp.q));
   const category = first(sp.category);
@@ -39,7 +41,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   const tag = sanitizeSearch(first(sp.tag), 30).toLowerCase();
   const sort = first(sp.sort) ?? "updated";
 
-  let query = supabase.from("notes").select("id,title,content,category,tags,is_favorite,is_demo,updated_at").limit(500);
+  let query = supabase.from("notes").select("id,title,content,category,tags,is_favorite,is_demo,updated_at").eq("workspace_id", workspace.id).limit(500);
   if (q) query = query.or(`title.ilike."%${q}%",content.ilike."%${q}%",search.wfts(english)."${q}"`);
   if (category) query = query.eq("category", category.slice(0, 60));
   if (fav === "1") query = query.eq("is_favorite", true);
@@ -48,7 +50,7 @@ export default async function NotesPage({ searchParams }: { searchParams: Promis
   else if (sort === "created") query = query.order("created_at", { ascending: false });
   else query = query.order("is_favorite", { ascending: false }).order("updated_at", { ascending: false });
 
-  const [{ data, error }, catRes] = await Promise.all([query, supabase.from("notes").select("category").limit(2000)]);
+  const [{ data, error }, catRes] = await Promise.all([query, supabase.from("notes").select("category").eq("workspace_id", workspace.id).limit(2000)]);
   const notes = (data ?? []) as Note[];
   const categories = Array.from(new Set((catRes.data ?? []).map((c: { category: string }) => c.category))).sort();
   const total = catRes.data?.length ?? 0;

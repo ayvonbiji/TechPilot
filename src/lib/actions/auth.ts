@@ -35,7 +35,7 @@ export async function signIn(input: unknown, next?: string): Promise<ActionResul
   redirect(safeNext(next));
 }
 
-export async function signUp(input: unknown): Promise<ActionResult<{ needsConfirmation: boolean }>> {
+export async function signUp(input: unknown, next?: string): Promise<ActionResult<{ needsConfirmation: boolean }>> {
   const v = validate(signUpSchema, input);
   if (!v.success) return invalid(v.fieldErrors);
   const supabase = await createClient();
@@ -44,7 +44,7 @@ export async function signUp(input: unknown): Promise<ActionResult<{ needsConfir
     password: v.data.password,
     options: {
       data: { display_name: v.data.displayName },
-      emailRedirectTo: `${await siteUrl()}/auth/confirm?next=/dashboard`,
+      emailRedirectTo: `${await siteUrl()}/auth/confirm?next=${encodeURIComponent(safeNext(next))}`,
     },
   });
   if (error) {
@@ -54,7 +54,7 @@ export async function signUp(input: unknown): Promise<ActionResult<{ needsConfir
     }
     return { ok: false, error: "Couldn't create the account. Try again." };
   }
-  if (data.session) redirect("/dashboard");
+  if (data.session) redirect(safeNext(next));
   return { ok: true, data: { needsConfirmation: true } };
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, Plus } from "lucide-react";
 import { getProfile } from "@/lib/auth";
+import { requireStaff } from "@/lib/workspace";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, localDateOf } from "@/lib/dates";
 import { KB_CATEGORIES, KB_STATUSES } from "@/lib/constants";
@@ -28,6 +29,7 @@ const SORTS = [
 export default async function KnowledgePage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const profile = await getProfile();
+  const { workspace } = await requireStaff();
   const supabase = await createClient();
   const q = sanitizeSearch(first(sp.q));
   const category = first(sp.category);
@@ -38,6 +40,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
   let query = supabase
     .from("troubleshooting_records")
     .select("id,title,category,status,symptoms,solution,tags,created_at,updated_at,is_demo")
+    .eq("workspace_id", workspace.id)
     .limit(500);
   if (q) {
     // Full-text search across every section, plus substring matches on title,
@@ -56,7 +59,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
 
   const [{ data, error }, countRes] = await Promise.all([
     query,
-    supabase.from("troubleshooting_records").select("id", { count: "exact", head: true }),
+    supabase.from("troubleshooting_records").select("id", { count: "exact", head: true }).eq("workspace_id", workspace.id),
   ]);
   const records = (data ?? []) as TroubleshootingRecord[];
   const total = countRes.count ?? 0;
@@ -66,7 +69,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title="Troubleshooting knowledge base"
-        description="Problems you've worked through, documented from symptoms to verified fix."
+        description={workspace.type === "personal" ? "Problems you've worked through, documented from symptoms to verified fix." : `Shared with the technicians in ${workspace.name}.`}
         actions={<Button asChild><Link href="/knowledge/new"><Plus /> New record</Link></Button>}
       />
       <FilterBar

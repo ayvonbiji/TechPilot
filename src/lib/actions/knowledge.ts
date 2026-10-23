@@ -5,6 +5,7 @@ import { troubleshootingSchema } from "@/lib/validation/schemas";
 import { validate } from "@/lib/validation/common";
 import type { ActionResult } from "@/lib/types";
 import { authed, dbFail, invalid, isUuid } from "./helpers";
+import { getCurrentMembership, isStaffRole } from "@/lib/workspace";
 
 function refresh(id?: string) {
   revalidatePath("/knowledge");
@@ -18,9 +19,11 @@ export async function createRecord(input: unknown): Promise<ActionResult<{ id: s
   if (!v.success) return invalid(v.fieldErrors);
   const a = await authed();
   if ("error" in a) return a.error!;
+  const m = await getCurrentMembership();
+  if (!isStaffRole(m.role)) return { ok: false, error: "You can't add records in this workspace." };
   const { data, error } = await a.supabase
     .from("troubleshooting_records")
-    .insert({ ...v.data, user_id: a.user.id })
+    .insert({ ...v.data, user_id: a.user.id, workspace_id: m.workspace.id })
     .select("id")
     .single();
   if (error || !data) return dbFail(error);

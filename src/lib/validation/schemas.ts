@@ -144,3 +144,46 @@ export const profileSchema = z.object({
   time_format: oneOf(["12h", "24h"] as const, "time format"),
 });
 export type ProfileInput = z.input<typeof profileSchema>;
+
+// --------------------------------------------------------------- workspaces
+export const workspaceCreateSchema = z.object({
+  name: requiredText("Name", 80),
+  type: oneOf(["freelance", "organisation"] as const, "workspace type"),
+  ticket_prefix: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine((v) => /^[A-Z]{2,6}$/.test(v), "Use 2–6 letters, e.g. ACME"),
+});
+
+export const workspaceUpdateSchema = z.object({
+  name: requiredText("Name", 80),
+  ticket_prefix: z
+    .string()
+    .trim()
+    .transform((v) => v.toUpperCase())
+    .refine((v) => /^[A-Z]{2,6}$/.test(v), "Use 2–6 letters, e.g. ACME"),
+  brand_color: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || /^#[0-9a-fA-F]{6}$/.test(v), "Use a hex colour like #1f6feb")
+    .transform((v) => (v === "" ? null : v.toLowerCase())),
+  logo_url: z
+    .string()
+    .trim()
+    .max(1024, "That URL is too long")
+    .refine((v) => {
+      if (v === "") return true;
+      try {
+        return new URL(v).protocol === "https:" && !/\s/.test(v);
+      } catch {
+        return false;
+      }
+    }, "Use an https:// image address, or leave it empty")
+    .transform((v) => (v === "" ? null : v)),
+});
+
+export const inviteSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
+  role: oneOf(["admin", "agent"] as const, "role"),
+});

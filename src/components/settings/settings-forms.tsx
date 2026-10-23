@@ -12,6 +12,7 @@ import { FormError } from "@/components/shared/form-error";
 import { useActionForm } from "@/components/shared/use-action-form";
 import { deleteAccount, loadDemoData, removeDemoData, updateProfile } from "@/lib/actions/settings";
 import { signOut, updatePassword } from "@/lib/actions/auth";
+import { leaveWorkspace } from "@/lib/actions/workspaces";
 import { DATE_FORMATS } from "@/lib/constants";
 import { formatDate, formatDateTime } from "@/lib/dates";
 import { newPasswordSchema, profileSchema } from "@/lib/validation/schemas";
@@ -246,6 +247,37 @@ export function AccountPanel() {
           </div>
         }
         onConfirm={() => submit(text, (input) => deleteAccount(String(input)))}
+      />
+    </Panel>
+  );
+}
+
+export function CurrentWorkspacePanel({ name, typeLabel, roleLabel, canLeave }: { name: string; typeLabel: string; roleLabel: string; canLeave: boolean }) {
+  const [open, setOpen] = useState(false);
+  const { pending, formError, submit } = useActionForm(null);
+  return (
+    <Panel>
+      <PanelHeader title="Current workspace" />
+      <PanelBody className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm">
+          <span className="font-medium">{name}</span>
+          <span className="text-muted">, {typeLabel.toLowerCase()} workspace. Your role: {roleLabel}.</span>
+        </p>
+        {canLeave && <Button variant="secondary" onClick={() => setOpen(true)}><LogOut /> Leave workspace</Button>}
+      </PanelBody>
+      <ConfirmDialog
+        open={open}
+        onOpenChange={setOpen}
+        title={`Leave ${name}?`}
+        confirmLabel="Leave workspace"
+        pending={pending}
+        description={
+          <div className="space-y-3">
+            <p>You lose access to its tickets and shared knowledge base. Someone will need to invite you again to rejoin.</p>
+            <FormError message={formError} />
+          </div>
+        }
+        onConfirm={() => submit(null, () => leaveWorkspace())}
       />
     </Panel>
   );
