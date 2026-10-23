@@ -5,7 +5,6 @@ export type DateFormat = "dd MMM yyyy" | "dd/MM/yyyy" | "MM/dd/yyyy" | "yyyy-MM-
 export type TimeFormat = "12h" | "24h";
 
 export interface Profile {
-  id: string;
   display_name: string;
   theme: Theme;
   timezone: string;
@@ -17,7 +16,6 @@ export interface Profile {
 
 interface Owned {
   id: string;
-  user_id: string;
   is_demo: boolean;
   created_at: string;
   updated_at: string;
