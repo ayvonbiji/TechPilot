@@ -410,6 +410,7 @@ declare
   seq integer;
   prefix text;
   rule_user uuid;
+  rule_name text;
 begin
   -- uid is null only for a database administrator working directly in SQL.
   if uid is not null and r is null then raise exception 'You are not a member of this workspace' using errcode = '42501'; end if;
@@ -458,13 +459,15 @@ begin
 
   -- Automation: first matching active "assign" rule, if nobody is assigned yet.
   if new.assignee_id is null then
-    select a.target_user_id into rule_user from public.automation_rules a
+    select a.target_user_id, a.name into rule_user, rule_name from public.automation_rules a
       where a.workspace_id = new.workspace_id and a.is_active and a.action = 'assign'
         and (a.match_category is null or lower(a.match_category) = lower(new.category))
         and (a.match_priority is null or a.match_priority = new.priority)
         and public.is_staff_user(a.workspace_id, a.target_user_id)
       order by a.position, a.created_at limit 1;
     new.assignee_id := rule_user;
+    -- Lets the history record that automation, not the creator, assigned it.
+    if rule_user is not null then perform set_config('app.assigned_by_rule', rule_name, true); end if;
   end if;
 
   if new.assignee_id is not null and not public.is_staff_user(new.workspace_id, new.assignee_id) then
@@ -498,13 +501,19 @@ as $$
 declare
   w uuid;
   rule record;
+  by_rule text;
   actor text := coalesce(public.display_name_of(auth.uid()), '');
 begin
   insert into public.ticket_events (ticket_id, workspace_id, actor_id, actor_name, kind, to_value, is_public)
   values (new.id, new.workspace_id, public.current_actor(), actor, 'created', new.status, true);
   if new.assignee_id is not null then
+    by_rule := nullif(current_setting('app.assigned_by_rule', true), '');
+    perform set_config('app.assigned_by_rule', '', true);
     insert into public.ticket_events (ticket_id, workspace_id, actor_id, actor_name, kind, to_value)
-    values (new.id, new.workspace_id, public.current_actor(), actor, 'assignee', new.assignee_id::text);
+    values (new.id, new.workspace_id,
+            case when by_rule is null then public.current_actor() end,
+            case when by_rule is null then actor else 'Automation (' || by_rule || ')' end,
+            'assignee', new.assignee_id::text);
     perform public.notify(new.assignee_id, new.workspace_id, new.id, 'ticket_assigned',
       new.reference || ' assigned to you: ' || new.subject, '', 'assigned:' || new.id || ':' || new.assignee_id || ':created');
   end if;

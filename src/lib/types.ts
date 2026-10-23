@@ -35,7 +35,11 @@ export interface Task extends Owned {
 }
 
 export interface TroubleshootingRecord extends Owned {
+  workspace_id?: string;
   title: string;
+  summary?: string;
+  problem_description?: string;
+  visibility?: "private" | "workspace" | "public";
   category: string;
   status: "investigating" | "resolved";
   symptoms: string;

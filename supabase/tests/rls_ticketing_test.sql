@@ -309,6 +309,9 @@ do $$ begin
                  and ticket_id = pg_temp.v('t6') and dedupe_key like 'rule:%'), 'notify rule fired';
   assert exists (select 1 from public.notifications where user_id = 'e0000000-0000-0000-0000-00000000000b'
                  and ticket_id = pg_temp.v('t6') and kind = 'ticket_assigned'), 'auto-assignee notified';
+  assert (select actor_name from public.ticket_events where ticket_id = pg_temp.v('t6') and kind = 'assignee') = 'Automation (Printers to Gita)',
+    'history credits the automation rule, not the customer';
+  assert (select actor_id from public.ticket_events where ticket_id = pg_temp.v('t6') and kind = 'assignee') is null, 'no human actor';
   raise notice 'PASS automation assigns and notifies; only admins manage rules, targeting staff only';
 end $$;
 

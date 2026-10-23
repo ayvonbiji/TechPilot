@@ -17,8 +17,8 @@ function Brand() {
         <span className="led absolute -right-0.5 -top-0.5 text-ok" aria-hidden />
       </span>
       <span className="leading-tight">
-        <span className="block text-[14px] font-semibold">IT Engineer</span>
-        <span className="block text-[12px] text-sidebar-muted">Companion</span>
+        <span className="block text-[14px] font-semibold">TechPilot</span>
+        <span className="block text-[12px] text-sidebar-muted">IT service desk</span>
       </span>
     </Link>
   );
@@ -26,7 +26,9 @@ function Brand() {
 
 function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
   const pathname = usePathname();
-  const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+  // "/settings" shouldn't light up for "/settings/workspace", which has its own item.
+  const active =
+    pathname === item.href || (pathname.startsWith(`${item.href}/`) && !(item.href === "/settings" && pathname.startsWith("/settings/workspace")));
   const Icon = item.icon;
   return (
     <Link
@@ -42,7 +44,12 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
     >
       {active && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-accent" aria-hidden />}
       <Icon className={cn("h-4 w-4", active ? "text-white" : "text-sidebar-muted group-hover:text-white")} aria-hidden />
-      {item.label}
+      <span className="flex-1">{item.label}</span>
+      {item.badge ? (
+        <span className="min-w-5 rounded-full bg-accent px-1.5 text-center text-[11px] font-semibold leading-5 text-white" aria-label={`${item.badge} unread`}>
+          {item.badge > 99 ? "99+" : item.badge}
+        </span>
+      ) : null}
     </Link>
   );
 }
@@ -50,13 +57,15 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void 
 export interface SidebarProps {
   workspaces: SwitcherWorkspace[];
   currentId: string;
+  unread?: number;
+  platformAdmin?: boolean;
   onNavigate?: () => void;
   footer?: React.ReactNode;
 }
 
-export function SidebarContent({ workspaces, currentId, onNavigate, footer }: SidebarProps) {
+export function SidebarContent({ workspaces, currentId, unread, platformAdmin, onNavigate, footer }: SidebarProps) {
   const current = workspaces.find((w) => w.id === currentId) ?? workspaces[0];
-  const groups = navFor(current.type, current.role);
+  const groups = navFor({ type: current.type, role: current.role, unread, platformAdmin });
   return (
     <div className="flex h-full flex-col bg-sidebar px-3 py-4">
       <Brand />

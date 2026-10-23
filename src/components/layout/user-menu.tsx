@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dropdown";
 import { signOut } from "@/lib/actions/auth";
 
-export function UserMenu({ name, email }: { name: string; email: string }) {
+export function UserMenu({ name, email, settingsHref = "/settings" }: { name: string; email: string; settingsHref?: string }) {
   const [pending, start] = useTransition();
   const initials =
     (name || email)
@@ -38,7 +38,7 @@ export function UserMenu({ name, email }: { name: string; email: string }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/settings">
+          <Link href={settingsHref}>
             <Settings /> Settings
           </Link>
         </DropdownMenuItem>

@@ -10,7 +10,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </svg>
             <span className="led absolute -right-0.5 -top-0.5 text-ok" aria-hidden />
           </span>
-          <span className="font-semibold">IT Engineer Companion</span>
+          <span className="font-semibold">TechPilot</span>
         </div>
 
         <div className="max-w-sm">

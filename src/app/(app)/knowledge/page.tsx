@@ -5,7 +5,8 @@ import { getProfile } from "@/lib/auth";
 import { requireStaff } from "@/lib/workspace";
 import { createClient } from "@/lib/supabase/server";
 import { formatDate, localDateOf } from "@/lib/dates";
-import { KB_CATEGORIES, KB_STATUSES } from "@/lib/constants";
+import { ALL_KB_CATEGORIES, KB_CATEGORIES, KB_STATUSES, KB_VISIBILITY } from "@/lib/constants";
+import { VisibilityBadge } from "@/components/knowledge/visibility-badge";
 import { first, sanitizeSearch, truncate } from "@/lib/utils";
 import type { TroubleshootingRecord } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -39,7 +40,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
 
   let query = supabase
     .from("troubleshooting_records")
-    .select("id,title,category,status,symptoms,solution,tags,created_at,updated_at,is_demo")
+    .select("id,title,summary,visibility,category,status,symptoms,solution,tags,created_at,updated_at,is_demo")
     .eq("workspace_id", workspace.id)
     .limit(500);
   if (q) {
@@ -49,7 +50,9 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
       `search.wfts(english)."${q}",title.ilike."%${q}%",commands_used.ilike."%${q}%",symptoms.ilike."%${q}%"`,
     );
   }
-  if (category && (KB_CATEGORIES as readonly string[]).includes(category)) query = query.eq("category", category);
+  if (category && (ALL_KB_CATEGORIES as readonly string[]).includes(category)) query = query.eq("category", category);
+  const visibility = first(sp.visibility);
+  if (visibility && ["private", "workspace", "public"].includes(visibility)) query = query.eq("visibility", visibility);
   if (status && KB_STATUSES.some((s) => s.value === status)) query = query.eq("status", status);
   if (tag) query = query.contains("tags", [tag]);
   if (sort === "oldest") query = query.order("created_at", { ascending: true });
@@ -78,6 +81,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
         filters={[
           { name: "category", label: "Category", options: KB_CATEGORIES.map((c) => ({ value: c, label: c })) },
           { name: "status", label: "Status", options: KB_STATUSES },
+          ...(workspace.type === "personal" ? [] : [{ name: "visibility", label: "Visibility", options: KB_VISIBILITY.map((v) => ({ value: v.value, label: v.label })) }]),
         ]}
         sort={{ name: "sort", label: "Sort order", options: SORTS }}
       />
@@ -118,6 +122,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                       <h2 className="text-[15px] font-semibold">{r.title}</h2>
                       {r.is_demo && <DemoBadge />}
+                      {workspace.type !== "personal" && r.visibility && <VisibilityBadge visibility={r.visibility} />}
                     </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-muted">
                       <LedLabel tone={r.status === "resolved" ? "ok" : "warn"} pulse={r.status === "investigating"}>
@@ -126,7 +131,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
                       <span>{r.category}</span>
                       <span>{formatDate(localDateOf(r.created_at, profile.timezone), profile.date_format)}</span>
                     </div>
-                    {r.symptoms && <p className="mt-2 line-clamp-2 text-sm text-muted">{truncate(r.symptoms.replace(/\s+/g, " "), 240)}</p>}
+                    {(r.summary || r.symptoms) && <p className="mt-2 line-clamp-2 text-sm text-muted">{truncate((r.summary || r.symptoms).replace(/\s+/g, " "), 240)}</p>}
                   </Link>
                   {r.tags.length > 0 && (
                     <div className="px-5 pb-4">

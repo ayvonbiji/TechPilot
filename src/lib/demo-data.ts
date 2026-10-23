@@ -22,7 +22,7 @@ export function buildDemoData(today: string, tz: string) {
   const records = [
     {
       title: "Laptop connects to Wi-Fi but has no internet",
-      category: "TCP/IP, DNS and DHCP",
+      category: "DNS and DHCP",
       status: "resolved",
       symptoms: "- Wi-Fi icon shows connected, browser can't load pages\n- Started after the laptop woke from sleep",
       possible_causes: "- Adapter didn't renew its DHCP lease after sleep\n- DNS cache holding stale entries",
@@ -36,7 +36,7 @@ export function buildDemoData(today: string, tz: string) {
     },
     {
       title: "Print jobs stuck in the queue",
-      category: "Printers and scanners",
+      category: "Printers and peripherals",
       status: "resolved",
       symptoms: "- Documents show 'Printing' but nothing comes out\n- New jobs pile up behind the first one",
       possible_causes: "- Corrupted job blocking the spooler\n- Printer offline",

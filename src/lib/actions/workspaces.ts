@@ -92,6 +92,7 @@ export async function inviteMember(input: unknown): Promise<ActionResult<{ link:
   });
   if (error || !data) return rpcFail(error, "Couldn't create the invitation. Try again.");
   revalidatePath("/settings/workspace");
+  revalidatePath("/team");
   return { ok: true, data: { link: `${await siteUrl()}/invite/${data as string}` }, message: "Invitation created" };
 }
 
@@ -102,6 +103,7 @@ export async function revokeInvitation(id: string): Promise<ActionResult> {
   const { error } = await a.supabase.rpc("revoke_invitation", { inv: id });
   if (error) return rpcFail(error);
   revalidatePath("/settings/workspace");
+  revalidatePath("/team");
   return { ok: true, message: "Invitation revoked" };
 }
 
@@ -113,6 +115,7 @@ export async function setMemberRole(userId: string, role: string): Promise<Actio
   const { error } = await a.supabase.rpc("set_member_role", { ws: m.workspace.id, p_user: userId, p_role: role });
   if (error) return rpcFail(error);
   revalidatePath("/settings/workspace");
+  revalidatePath("/team");
   return { ok: true, message: "Role updated" };
 }
 
@@ -124,6 +127,7 @@ export async function removeMember(userId: string): Promise<ActionResult> {
   const { error } = await a.supabase.rpc("remove_member", { ws: m.workspace.id, p_user: userId });
   if (error) return rpcFail(error);
   revalidatePath("/settings/workspace");
+  revalidatePath("/team");
   return { ok: true, message: "Member removed" };
 }
 

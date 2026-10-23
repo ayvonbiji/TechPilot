@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getProfile } from "@/lib/auth";
+import { requireStaff } from "@/lib/workspace";
 import { formatDateTime } from "@/lib/dates";
 import { deleteRecord } from "@/lib/actions/knowledge";
 import type { TroubleshootingRecord } from "@/lib/types";
@@ -14,11 +15,13 @@ import { LedLabel } from "@/components/shared/led";
 import { TagList } from "@/components/shared/tag-list";
 import { CopyButton } from "@/components/shared/copy-button";
 import { DeleteButton } from "@/components/shared/delete-button";
+import { VisibilityBadge } from "@/components/knowledge/visibility-badge";
 import { Markdown } from "@/components/shared/markdown";
 
 export const metadata: Metadata = { title: "Troubleshooting record" };
 
 const SECTIONS: { key: keyof TroubleshootingRecord; label: string; mono?: boolean }[] = [
+  { key: "problem_description", label: "Problem description" },
   { key: "symptoms", label: "Symptoms" },
   { key: "possible_causes", label: "Possible causes" },
   { key: "diagnostic_steps", label: "Diagnostic steps" },
@@ -41,6 +44,7 @@ function toMarkdown(r: TroubleshootingRecord) {
 export default async function RecordPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const profile = await getProfile();
+  const { workspace } = await requireStaff();
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const supabase = await createClient();
   const { data } = await supabase.from("troubleshooting_records").select("*").eq("id", id).maybeSingle();
@@ -61,8 +65,10 @@ export default async function RecordPage({ params }: { params: Promise<{ id: str
           </LedLabel>
           <Link href={`/knowledge?category=${encodeURIComponent(r.category)}`} className="hover:text-foreground">{r.category}</Link>
           {r.is_demo && <DemoBadge />}
+          {workspace.type !== "personal" && r.visibility && <VisibilityBadge visibility={r.visibility} />}
         </div>
         <h1 className="mt-2 text-[1.6rem] font-semibold leading-tight tracking-[-0.01em]">{r.title}</h1>
+        {r.summary && <p className="mt-1.5 max-w-[68ch] text-sm text-muted">{r.summary}</p>}
         <p className="mt-1 text-[13px] text-subtle">
           Created {formatDateTime(r.created_at, fmt)}
           {r.updated_at !== r.created_at && <>, edited {formatDateTime(r.updated_at, fmt)}</>}
