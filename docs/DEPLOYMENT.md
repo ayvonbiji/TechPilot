@@ -63,8 +63,9 @@ works with the current live app, so there's no downtime window.
 | `20261023000000_initial_schema.sql` | Original app | Tables, RLS, account deletion | — |
 | `20261024000000_workspaces.sql` | 2 | Workspaces, members, roles, clients (basic), invitations, audit log; personal workspace per user; knowledge base and notes become workspace-aware | `supabase/rollbacks/20261024000000_workspaces_down.sql` |
 | `20261025000000_ticketing.sql` | 3–5 | Tickets with per-workspace numbers, comments (public/internal), ticket history, SLA policies with client overrides and default targets for every workspace, notifications, automation rules, client contact fields and technicians, knowledge-base summary/problem/visibility and new categories (old ones still valid), platform overview, audit of client/SLA/automation changes | `supabase/rollbacks/20261025000000_ticketing_down.sql` |
+| `20261026000000_staff_target_fix.sql` | fix | Lets an administrator delete their account even if an automation rule they wrote targets someone who is no longer staff. Replaces one function; no data changes | `supabase/rollbacks/20261026000000_staff_target_fix_down.sql` |
 
-Run them in this order. `20261025…` needs `20261024…`. Both are additive: existing rows are
+Run them in this order. `20261025…` needs `20261024…`; `20261026…` needs `20261025…`. Both are additive: existing rows are
 backfilled, nothing is dropped, and existing knowledge-base articles become **Team** visibility,
 which is exactly how they're shared today.
 

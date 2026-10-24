@@ -43,6 +43,15 @@
   /* Chart series (validated for contrast and colour-blind separation) */
   --series-1: #2f5bea;
   --series-2: #c2410c;
+  /* Ticket-status ring: validated as neighbours in this order, incl. wrap-around */
+  --ring-open: #2a78d6;
+  --ring-progress: #eb6834;
+  --ring-resolved: #1baf7a;
+  --ring-waiting: #eda100;
+
+  --violet: #7c3aed;
+  --violet-soft: #f1eafe;
+  --brand-orange: #f47b20;
 
   --shadow-panel: 0 1px 2px rgb(16 32 56 / 0.05), 0 1px 0 rgb(16 32 56 / 0.02);
   --shadow-pop: 0 12px 32px -8px rgb(16 32 56 / 0.25), 0 2px 6px rgb(16 32 56 / 0.08);
@@ -84,6 +93,14 @@
 
   --series-1: #5b7ffb;
   --series-2: #e8682a;
+  --ring-open: #3987e5;
+  --ring-progress: #d95926;
+  --ring-resolved: #199e70;
+  --ring-waiting: #c98500;
+
+  --violet: #a78bfa;
+  --violet-soft: #251c45;
+  --brand-orange: #f58a3a;
 
   --shadow-panel: 0 1px 0 rgb(0 0 0 / 0.2);
   --shadow-pop: 0 16px 40px -10px rgb(0 0 0 / 0.6);
@@ -116,6 +133,9 @@
   --color-danger-soft: var(--danger-soft);
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
+  --color-violet: var(--violet);
+  --color-violet-soft: var(--violet-soft);
+  --color-brand-orange: var(--brand-orange);
   --color-code-bg: var(--code-bg);
   --color-code-fg: var(--code-fg);
   --shadow-panel: var(--shadow-panel);

@@ -26,7 +26,7 @@ export default async function PlatformPage() {
 
   return (
     <>
-      <PageHeader title="Platform overview" description="All workspaces on this TechPilot installation. Counts only; ticket contents stay private to each workspace." />
+      <PageHeader title="Platform overview" description="All workspaces on this installation. Counts only; ticket contents stay private to each workspace." />
       <dl className="mb-5 grid grid-cols-3 gap-4">
         {[["Workspaces", totals.ws], ["Memberships", totals.members], ["Tickets", totals.tickets]].map(([k, v]) => (
           <Panel key={k} className="px-5 py-4"><dt className="text-[12px] text-muted">{k}</dt><dd className="text-2xl font-semibold tabular-nums">{v}</dd></Panel>

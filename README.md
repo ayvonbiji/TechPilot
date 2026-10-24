@@ -1,4 +1,6 @@
-# TechPilot
+# KADACKAL IT Support Solutions
+
+*Support, solve, grow together.*
 
 An IT service desk and personal workspace in one. Run support for multiple client organisations with
 tickets, SLAs, a customer portal, a shared knowledge base and reports, and keep your own tasks, work
@@ -13,7 +15,7 @@ interface. Customers only ever see their own organisation's requests and never i
 
 | Area | What you can do |
 |---|---|
-| **Overview** | Live queue (open, in progress, waiting, overdue, due soon, resolved, closed), created/resolved trend, averages and SLA compliance for a date range, your assigned tickets, recent activity. Filter by client, technician and status. All figures come from saved tickets. |
+| **Dashboard** | Greeting and quick actions (new ticket, add client, write article); cards for open, overdue, resolved and active clients with real 7-day comparisons; recent tickets; ticket-status ring; upcoming SLA deadlines; recent activity. Plus a live queue (open, in progress, waiting, overdue, due soon, resolved, closed), created/resolved trend, averages and SLA compliance for a date range, your assigned tickets, recent activity. Filter by client, technician and status. All figures come from saved tickets. |
 | **Tickets** | Numbered per workspace (`NW-00001`). Table and Kanban board, search, filters, sorting, pagination, views for mine/unassigned/due soon/overdue. Detail page with public replies and staff-only internal notes, full history, assignment, priority, status workflow enforced by the database, resolution summary, linked knowledge article, printable. |
 | **Clients** | Organisation profiles, primary contact, service settings, portal accounts, assigned technicians, per-client SLA overrides, deactivation. |
 | **Customer portal** | Separate branded interface: raise requests, see the organisation's requests, reply, read resolutions and Public help articles, get updates. |
@@ -67,7 +69,7 @@ Requires **Node.js 20.9 or newer** (22 recommended).
 
 ```bash
 git clone https://github.com/ayvonbiji/TechPilot.git
-cd TechPilot
+cd TechPilot   # the repository keeps its original name
 npm install
 cp .env.example .env.local     # then edit .env.local
 npm run dev
@@ -92,7 +94,7 @@ If the variables are missing, the app shows a setup page instead of failing.
 1. Push the repository to GitHub (already done if you're reading this there).
 2. In [Vercel](https://vercel.com/new), **Import** the repository. The Next.js preset is detected automatically.
 3. Under **Environment Variables**, add the three variables above, with `NEXT_PUBLIC_SITE_URL` set to your
-   production URL, e.g. `https://techpilot.vercel.app`.
+   production URL, e.g. `https://kadackal.vercel.app`.
 4. Click **Deploy**.
 5. Back in Supabase **Authentication → URL Configuration**, set **Site URL** to the production URL and add
    `https://<your-app>.vercel.app/auth/confirm` to **Redirect URLs**.
@@ -127,8 +129,8 @@ Changing an environment variable on Vercel requires a redeploy to take effect.
 
 ## Privacy and responsible use
 
-This is a personal learning and productivity tool, not a company ticketing system. It has no company
-integrations and never runs commands. Troubleshooting and work-log forms remind you not to store
+The personal workspace is a learning and productivity space that stays yours; the service desk is for
+the organisations you support. The app has no employer-specific integrations and never runs commands. Troubleshooting and work-log forms remind you not to store
 confidential company or customer information, credentials, internal IP addresses or employee details.
 Describe problems in general terms so the knowledge stays yours to keep.
 

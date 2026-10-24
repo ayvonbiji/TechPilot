@@ -11,7 +11,7 @@ export default function RootError({ error, reset }: { error: Error & { digest?: 
     <main className="flex min-h-dvh items-center justify-center px-5">
       <div className="max-w-md text-center">
         <span className="led mx-auto block text-danger" aria-hidden />
-        <h1 className="mt-4 text-xl font-semibold">TechPilot couldn&apos;t load</h1>
+        <h1 className="mt-4 text-xl font-semibold">KADACKAL couldn&apos;t load</h1>
         <p className="mt-2 text-sm text-muted">
           Your saved work is safe. This is usually a temporary connection problem with the database. Try again in a moment.
         </p>

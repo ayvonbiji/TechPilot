@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Link2, Plus, UserMinus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/dialog";
 import { Field, Input, Select, errorProps } from "@/components/ui/input";
@@ -14,11 +15,19 @@ import { customerInviteSchema } from "@/lib/validation/schemas";
 import { NewClientDialog } from "./client-form";
 
 export function NewClientButton() {
-  const [open, setOpen] = useState(false);
+  // ?new=1 (e.g. from the dashboard's Add client button) opens the form straight away.
+  const params = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const [open, setOpen] = useState(() => params.get("new") === "1");
+  const close = () => {
+    setOpen(false);
+    if (params.get("new")) router.replace(pathname, { scroll: false });
+  };
   return (
     <>
       <Button onClick={() => setOpen(true)}><Plus /> New client</Button>
-      <NewClientDialog open={open} onClose={() => setOpen(false)} />
+      <NewClientDialog open={open} onClose={close} />
     </>
   );
 }

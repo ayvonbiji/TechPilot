@@ -19,7 +19,7 @@ export async function GET() {
   if (failed) return NextResponse.json({ error: "Export failed. Try again." }, { status: 500 });
 
   const data: Record<string, unknown> = {
-    app: "TechPilot",
+    app: "KADACKAL IT Support Solutions",
     format_version: 1,
     exported_at: new Date().toISOString(),
     account_email: user.email,

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { getProfile, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentMembership, getMemberships, isStaffRole } from "@/lib/workspace";
@@ -45,14 +45,33 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </aside>
       <header className="no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6 lg:px-8">
         <MobileNav workspaces={workspaces} currentId={current.workspace.id} unread={unread} platformAdmin={platformAdmin} />
+        <form action="/search" role="search" className="relative hidden max-w-md flex-1 md:block">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" aria-hidden />
+          <label htmlFor="global-search" className="sr-only">Search tickets, clients and knowledge base</label>
+          <input
+            id="global-search"
+            name="q"
+            type="search"
+            maxLength={100}
+            placeholder={current.workspace.type === "personal" ? "Search tickets, knowledge base…" : "Search tickets, clients, knowledge base…"}
+            className="h-9 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-sm placeholder:text-subtle focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
+          />
+        </form>
         <div className="flex-1" />
+        <Link href="/search" className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground md:hidden" aria-label="Search">
+          <Search className="h-4.5 w-4.5" aria-hidden />
+        </Link>
         <Link
           href="/notifications"
           className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground"
           aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
         >
           <Bell className="h-4.5 w-4.5" aria-hidden />
-          {unread > 0 && <span className="led absolute right-2 top-2 text-accent" aria-hidden />}
+          {unread > 0 && (
+            <span className="absolute -right-0.5 -top-0.5 min-w-4.5 rounded-full bg-danger px-1 text-center text-[10px] font-semibold leading-4.5 text-white" aria-hidden>
+              {unread > 99 ? "99+" : unread}
+            </span>
+          )}
         </Link>
         <ThemeToggle />
         <UserMenu name={profile.display_name} email={user.email} />
