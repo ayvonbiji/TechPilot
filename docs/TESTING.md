@@ -71,8 +71,9 @@ customers of different clients, a second workspace and an outsider:
 | Platform overview is limited to platform owners | Pass |
 | Ticket creation is rate-limited (60 per user per hour) | Pass |
 | Deleting a technician or a customer keeps tickets and history; deleting a workspace removes only its data | Pass |
+| A rule whose target is no longer staff doesn't block its author's account deletion; retargeting is still checked | Pass |
 
-**44 database checks in total, all passing.** The ticketing migration's rollback script was also
+**45 database checks in total, all passing.** The ticketing migration's rollback script was also
 tested: up, down, up again, keeping workspaces and personal data.
 
 ## 3. End-to-end browser tests
@@ -80,9 +81,9 @@ tested: up, down, up again, keeping workspaces and personal data.
 The production build (`next build && next start`) was driven in headless Chromium against a
 Supabase-compatible backend: the real migration on PostgreSQL 16, real PostgREST v12 (the data API
 Supabase runs), and a minimal GoTrue-compatible auth service issuing Supabase-style JWTs.
-**115 checks across five suites, all passing, with every migration applied** (latest run: 24 Oct 2026).
+**116 checks across five suites, all passing, with every migration applied** (latest run: 24 Oct 2026).
 
-### ITSM upgrade: multiple users and organisations (29 checks)
+### ITSM upgrade: multiple users and organisations (30 checks)
 
 Five people in separate browser sessions: an owner, a technician, a customer of client Alpha, a
 customer of client Beta, and the owner of an unrelated workspace.
@@ -106,12 +107,14 @@ customer of client Beta, and the owner of an unrelated workspace.
 - **Figures**: overview and reports totals match the saved tickets, including a client filter; CSV export
   includes SLA results; deactivating a client hides it from new tickets but customers keep access to
   existing ones.
+- **Dashboard and header search**: greeting, quick actions, stat cards, status ring and SLA deadlines match the saved tickets; header search finds tickets, clients and articles.
 - **Personal workspace** unaffected; **phone layout**: 14 staff and portal pages checked at 390px on a
   fresh load; **no browser errors** in any session.
 
 ### Original features, re-run after the upgrade (86 checks)
 
-Everything below still passes. Two checks were updated for deliberate changes (the knowledge base
+Everything below still passes. Three checks were updated for deliberate changes (the new header search box;
+the knowledge base
 menu item was renamed from Troubleshooting; team invitations moved to the Team page).
 
 - **Auth**: protected routes redirect to sign-in and return afterwards; client-side validation;
@@ -145,7 +148,8 @@ Bugs found by the upgrade's tests and fixed before handing over: a shared databa
 that only one of its tables had (automation rules couldn't be saved); deleting a technician's or
 customer's account was blocked by ticket history; ticket history credited the customer for an
 automatic assignment; the ticket list and SLA settings made phones zoom the whole page out; the
-overview's activity feed ignored its filters.
+overview's activity feed ignored its filters; an administrator couldn't delete their account if an
+automation rule they wrote targeted someone who had since stopped being staff.
 
 The browser harness isn't included in the repo because it depends on a local PostgREST binary and a
 bundled Chromium; the manual checklist below covers the same ground on a real Supabase project.

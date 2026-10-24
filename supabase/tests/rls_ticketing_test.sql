@@ -443,4 +443,25 @@ do $$ begin
   raise notice 'PASS deleting a workspace removes its clients and tickets only';
 end $$;
 
+-- Regression: a rule whose target is no longer staff must not block its
+-- author's account deletion (Postgres clears created_by with an UPDATE).
+reset role;
+select pg_temp.act('');
+insert into public.automation_rules (workspace_id, name, action, target_user_id, created_by)
+  values (pg_temp.v('ws'), 'Regression rule', 'notify', 'e0000000-0000-0000-0000-00000000000b', 'e0000000-0000-0000-0000-00000000000a')
+  returning id as rr \gset
+select set_config('t.rr', :'rr', false);
+update public.workspace_members set role = 'client', client_id = pg_temp.v('alpha')
+  where workspace_id = pg_temp.v('ws') and user_id = 'e0000000-0000-0000-0000-00000000000b';
+do $$ begin
+  update public.automation_rules set created_by = null where id = pg_temp.v('rr');
+  assert (select created_by from public.automation_rules where id = pg_temp.v('rr')) is null, 'author cleared';
+  perform pg_temp.expect_fail(format($f$update public.automation_rules set target_user_id = 'e0000000-0000-0000-0000-00000000000d' where id = %L$f$, pg_temp.v('rr')),
+    array['22023'], 'retargeting a rule to a customer');
+  delete from public.automation_rules where id = pg_temp.v('rr');
+  raise notice 'PASS a rule whose target is no longer staff does not block its author''s account deletion; retargeting is still checked';
+end $$;
+update public.workspace_members set role = 'agent', client_id = null
+  where workspace_id = pg_temp.v('ws') and user_id = 'e0000000-0000-0000-0000-00000000000b';
+
 \echo 'All ticketing tests passed.'

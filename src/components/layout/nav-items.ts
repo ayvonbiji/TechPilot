@@ -43,16 +43,16 @@ export interface NavContext {
  * are shown; every page also checks the role on the server.
  */
 export function navFor({ type, role, unread = 0, platformAdmin }: NavContext): { label: string; items: NavItem[] }[] {
-  const myWorkspace: NavItem[] = [
-    { href: "/dashboard", label: "My day", icon: LayoutDashboard },
+  const notifications: NavItem = { href: "/notifications", label: "Notifications", icon: Bell, badge: unread };
+  const knowledge: NavItem = { href: "/knowledge", label: "Knowledge base", icon: Wrench };
+  const tools: NavItem[] = [
     { href: "/tasks", label: "My tasks", icon: ListChecks },
     { href: "/worklog", label: "Work log", icon: NotebookPen },
     { href: "/reports", label: "Work summaries", icon: FileText },
     { href: "/notes", label: "Notes & commands", icon: SquareTerminal },
-    { href: "/learning", label: "Learning tracker", icon: GraduationCap },
     { href: "/resources", label: "Resources", icon: Bookmark },
   ];
-  const notifications: NavItem = { href: "/notifications", label: "Notifications", icon: Bell, badge: unread };
+  const growth = { label: "Growth", items: [{ href: "/learning", label: "Learning tracker", icon: GraduationCap }] };
   const platform = platformAdmin ? [{ label: "Platform", items: [{ href: "/platform", label: "Platform overview", icon: Server }] }] : [];
 
   if (type === "personal") {
@@ -60,33 +60,29 @@ export function navFor({ type, role, unread = 0, platformAdmin }: NavContext): {
       {
         label: "Work",
         items: [
-          myWorkspace[0],
+          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/tickets", label: "Tickets", icon: Inbox },
-          myWorkspace[1],
-          myWorkspace[2],
-          myWorkspace[3],
+          knowledge,
+          notifications,
         ],
       },
-      {
-        label: "Knowledge",
-        items: [{ href: "/knowledge", label: "Knowledge base", icon: Wrench }, myWorkspace[4], myWorkspace[6]],
-      },
-      { label: "Growth", items: [myWorkspace[5], notifications] },
+      { label: "Tools", items: tools },
+      growth,
       ...platform,
     ];
   }
 
   const groups: { label: string; items: NavItem[] }[] = [
     {
-      label: "Service desk",
+      label: "Work",
       items: [
-        { href: "/overview", label: "Overview", icon: Gauge },
+        { href: "/overview", label: "Dashboard", icon: Gauge },
         { href: "/tickets", label: "Tickets", icon: Inbox },
         { href: "/clients", label: "Clients", icon: Building2 },
-        { href: "/customer-portal", label: "Customer portal", icon: MonitorSmartphone },
-        { href: "/knowledge", label: "Knowledge base", icon: Wrench },
+        knowledge,
         { href: "/service-reports", label: "Reports", icon: BarChart3 },
         notifications,
+        { href: "/customer-portal", label: "Customer portal", icon: MonitorSmartphone },
       ],
     },
   ];
@@ -99,7 +95,11 @@ export function navFor({ type, role, unread = 0, platformAdmin }: NavContext): {
       ],
     });
   }
-  groups.push({ label: "My workspace", items: myWorkspace }, ...platform);
+  groups.push(
+    { label: "Tools", items: [{ href: "/dashboard", label: "My day", icon: LayoutDashboard }, ...tools] },
+    growth,
+    ...platform,
+  );
   return groups;
 }
 

@@ -8,8 +8,8 @@ import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 
 export const metadata: Metadata = {
-  title: { default: "TechPilot", template: "%s – TechPilot" },
-  description: "IT service desk and personal workspace: tickets, clients, knowledge base, SLAs, reports and your own tasks and learning.",
+  title: { default: "KADACKAL IT Support Solutions", template: "%s – KADACKAL" },
+  description: "Smart IT support and helpdesk platform: tickets, clients, knowledge base, SLAs and reports, plus your own personal workspace.",
   robots: { index: false, follow: false },
 };
 

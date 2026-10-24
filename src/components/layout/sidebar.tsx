@@ -5,21 +5,13 @@ import { usePathname } from "next/navigation";
 import { navFor, SETTINGS_ITEM, type NavItem } from "./nav-items";
 import { WorkspaceSwitcher, type SwitcherWorkspace } from "./workspace-switcher";
 import { cn } from "@/lib/utils";
+import { BRAND } from "@/lib/brand";
+import { BrandLockup } from "./brand-mark";
 
 function Brand() {
   return (
-    <Link href="/dashboard" className="flex items-center gap-2.5 px-2 py-1 text-white">
-      <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-active">
-        <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-          <rect x="3" y="4" width="18" height="12" rx="2" />
-          <path d="M8 20h8M12 16v4" strokeLinecap="round" />
-        </svg>
-        <span className="led absolute -right-0.5 -top-0.5 text-ok" aria-hidden />
-      </span>
-      <span className="leading-tight">
-        <span className="block text-[14px] font-semibold">TechPilot</span>
-        <span className="block text-[12px] text-sidebar-muted">IT service desk</span>
-      </span>
+    <Link href="/" className="block px-2 py-1" aria-label={`${BRAND.fullName}, home`}>
+      <BrandLockup onDark />
     </Link>
   );
 }

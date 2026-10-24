@@ -77,3 +77,28 @@ export function SlaChip({ ticket, now }: { ticket: Ticket; now?: number }) {
     </span>
   );
 }
+
+const STATUS_PILL: Record<TicketStatus, string> = {
+  open: "bg-accent-soft text-accent",
+  in_progress: "bg-violet-soft text-violet",
+  waiting_customer: "bg-warn-soft text-warn",
+  waiting_third_party: "bg-warn-soft text-warn",
+  resolved: "bg-ok-soft text-ok",
+  closed: "bg-surface-2 text-muted",
+};
+const PRIORITY_PILL: Record<TicketPriority, string> = {
+  low: "bg-ok-soft text-ok",
+  medium: "bg-warn-soft text-warn",
+  high: "bg-danger-soft text-danger",
+  critical: "bg-danger text-white",
+};
+
+/** Tinted pill variants used in dashboard tables. */
+export function StatusPill({ status }: { status: TicketStatus }) {
+  const short = status === "waiting_customer" ? "Waiting: customer" : status === "waiting_third_party" ? "Waiting: third party" : statusLabel(status);
+  return <span className={cn("inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-medium", STATUS_PILL[status])}>{short}</span>;
+}
+
+export function PriorityPill({ priority }: { priority: TicketPriority }) {
+  return <span className={cn("inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-[12px] font-medium", PRIORITY_PILL[priority])}>{priorityLabel(priority)}</span>;
+}

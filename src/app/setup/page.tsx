@@ -16,7 +16,7 @@ export default async function SetupPage({ searchParams }: { searchParams: Promis
           <span className="led text-warn" aria-hidden />
           <h1 className="mt-3 text-2xl font-semibold">The database needs an update</h1>
           <p className="mt-2 text-sm text-muted">
-            This version of TechPilot uses workspaces, but the connected Supabase database doesn&apos;t have them yet. Your data is
+            This version of the app uses workspaces, but the connected Supabase database doesn&apos;t have them yet. Your data is
             safe; nothing has been changed.
           </p>
           <ol className="mt-6 list-decimal space-y-2 pl-5 text-sm">
