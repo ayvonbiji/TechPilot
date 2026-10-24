@@ -114,8 +114,7 @@ customer of client Beta, and the owner of an unrelated workspace.
 ### Original features, re-run after the upgrade (86 checks)
 
 Everything below still passes. Three checks were updated for deliberate changes (the new header search box;
-the knowledge base
-menu item was renamed from Troubleshooting; team invitations moved to the Team page).
+the knowledge base menu item was renamed from Troubleshooting; team invitations moved to the Team page).
 
 - **Auth**: protected routes redirect to sign-in and return afterwards; client-side validation;
   sign-up, sign-in, wrong password, sign-out; email confirmation link; reused link rejected; password
