@@ -10,7 +10,8 @@ import { FormError } from "@/components/shared/form-error";
 import { PrivacyNotice } from "@/components/shared/privacy-notice";
 import { useActionForm } from "@/components/shared/use-action-form";
 import { createRecord, updateRecord } from "@/lib/actions/knowledge";
-import { KB_CATEGORIES, KB_STATUSES } from "@/lib/constants";
+import { setTicketField } from "@/lib/actions/tickets";
+import { KB_CATEGORIES, KB_STATUSES, KB_VISIBILITY } from "@/lib/constants";
 import { KB_TEMPLATES } from "@/lib/kb-templates";
 import { troubleshootingSchema } from "@/lib/validation/schemas";
 import type { TroubleshootingRecord } from "@/lib/types";
@@ -18,6 +19,9 @@ import { cn } from "@/lib/utils";
 
 type Values = {
   title: string;
+  summary: string;
+  visibility: string;
+  problem_description: string;
   category: string;
   status: string;
   symptoms: string;
@@ -32,6 +36,9 @@ type Values = {
 
 const BLANK: Values = {
   title: "",
+  summary: "",
+  visibility: "workspace",
+  problem_description: "",
   category: KB_CATEGORIES[0],
   status: "resolved",
   symptoms: "",
@@ -45,6 +52,7 @@ const BLANK: Values = {
 };
 
 const SECTIONS: { key: keyof Values; label: string; hint: string; rows: number; mono?: boolean }[] = [
+  { key: "problem_description", label: "Problem description", hint: "The problem in a sentence or two, as a user would describe it.", rows: 3 },
   { key: "symptoms", label: "Symptoms", hint: "What was observed, in general terms.", rows: 4 },
   { key: "possible_causes", label: "Possible causes", hint: "What could explain the symptoms.", rows: 3 },
   { key: "diagnostic_steps", label: "Diagnostic steps", hint: "What you checked, in order, and what you found.", rows: 5 },
@@ -54,12 +62,28 @@ const SECTIONS: { key: keyof Values; label: string; hint: string; rows: number; 
   { key: "lessons_learned", label: "Lessons learned", hint: "What you'd do faster next time.", rows: 3 },
 ];
 
-export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
+export function RecordForm({
+  record,
+  prefill,
+  showVisibility = true,
+  linkTicketId,
+}: {
+  record?: TroubleshootingRecord;
+  /** Starting values, e.g. drafted from a resolved ticket. */
+  prefill?: Partial<Values>;
+  /** Visibility only matters in shared workspaces. */
+  showVisibility?: boolean;
+  /** Link the new article to this ticket after saving. */
+  linkTicketId?: string;
+}) {
   const router = useRouter();
   const [values, setValues] = useState<Values>(
     record
       ? {
           title: record.title,
+          summary: record.summary ?? "",
+          visibility: record.visibility ?? "workspace",
+          problem_description: record.problem_description ?? "",
           category: record.category,
           status: record.status,
           symptoms: record.symptoms,
@@ -71,7 +95,7 @@ export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
           lessons_learned: record.lessons_learned,
           tags: record.tags.join(", "),
         }
-      : BLANK,
+      : { ...BLANK, ...prefill },
   );
   const [template, setTemplate] = useState("blank");
   const [confirmed, setConfirmed] = useState(false);
@@ -109,7 +133,14 @@ export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
           return;
         }
         submit(values, (input) => (record ? updateRecord(record.id, input) : createRecord(input)), {
-          onSuccess: (res) => router.push(`/knowledge/${res.data?.id ?? record?.id ?? ""}`),
+          onSuccess: async (res) => {
+            if (linkTicketId && res.data?.id) {
+              await setTicketField(linkTicketId, "kb_article_id", res.data.id);
+              router.push(`/tickets/${linkTicketId}`);
+              return;
+            }
+            router.push(`/knowledge/${res.data?.id ?? record?.id ?? ""}`);
+          },
         });
       }}
     >
@@ -117,13 +148,17 @@ export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
         <FormError message={formError} />
         <Panel>
           <PanelBody className="space-y-4">
-            <Field label="Problem title" htmlFor="title" required error={fieldErrors.title}>
+            <Field label="Title" htmlFor="title" required error={fieldErrors.title}>
               <Input id="title" value={values.title} onChange={set("title")} maxLength={200} placeholder="e.g. Laptop connects to Wi-Fi but has no internet" {...errorProps("title", fieldErrors.title)} />
+            </Field>
+            <Field label="Summary" htmlFor="summary" hint="One or two sentences shown in search results." error={fieldErrors.summary}>
+              <Input id="summary" value={values.summary} onChange={set("summary")} maxLength={500} {...errorProps("summary", fieldErrors.summary)} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Category" htmlFor="category" required error={fieldErrors.category}>
                 <Select id="category" value={values.category} onChange={set("category")}>
                   {KB_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  {!(KB_CATEGORIES as readonly string[]).includes(values.category) && <option value={values.category}>{values.category} (earlier category)</option>}
                 </Select>
               </Field>
               <Field label="Status" htmlFor="status" error={fieldErrors.status}>
@@ -188,6 +223,22 @@ export function RecordForm({ record }: { record?: TroubleshootingRecord }) {
             <Field label="Tags" htmlFor="tags" hint="Comma-separated, e.g. dns, wifi, driver" error={fieldErrors.tags}>
               <Input id="tags" value={values.tags} onChange={set("tags")} {...errorProps("tags", fieldErrors.tags)} />
             </Field>
+            {showVisibility && (
+              <fieldset>
+                <legend className="text-[13px] font-medium">Who can see it</legend>
+                <div className="mt-2 space-y-1.5">
+                  {KB_VISIBILITY.map((o) => (
+                    <label key={o.value} className={cn("flex cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2", values.visibility === o.value ? "border-accent bg-accent-soft/50" : "border-border")}>
+                      <input type="radio" name="visibility" value={o.value} checked={values.visibility === o.value} onChange={set("visibility")} className="mt-1 accent-[var(--accent)]" />
+                      <span>
+                        <span className="block text-sm font-medium">{o.label}</span>
+                        <span className="block text-[12px] text-muted">{o.hint}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
             <PrivacyNotice />
             <label className={cn("flex items-start gap-2.5 text-[13px]", confirmError && !confirmed && "text-danger")}>
               <input

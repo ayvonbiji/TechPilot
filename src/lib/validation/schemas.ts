@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   BOOKMARK_CATEGORIES,
   DATE_FORMATS,
-  KB_CATEGORIES,
+  ALL_KB_CATEGORIES,
   SKILL_CATEGORIES,
 } from "@/lib/constants";
 import { isValidTimeZone } from "@/lib/dates";
@@ -50,7 +50,11 @@ export type TaskInput = z.input<typeof taskSchema>;
 export const troubleshootingSchema = z
   .object({
     title: requiredText("Problem title", 200),
-    category: oneOf(KB_CATEGORIES, "category"),
+    category: oneOf(ALL_KB_CATEGORIES, "category"),
+    // Optional so an edit that doesn't send them leaves the stored values alone.
+    summary: text(500).optional(),
+    problem_description: text(10000).optional(),
+    visibility: oneOf(["private", "workspace", "public"] as const, "visibility").optional(),
     status: oneOf(["investigating", "resolved"] as const, "status"),
     symptoms: text(10000).default(""),
     possible_causes: text(10000).default(""),
@@ -187,3 +191,106 @@ export const inviteSchema = z.object({
   email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
   role: oneOf(["admin", "agent"] as const, "role"),
 });
+
+// --------------------------------------------------------------- tickets
+const optionalUuid = z
+  .union([z.string(), z.null(), z.undefined()])
+  .transform((v) => (v ? v.trim() : ""))
+  .refine((v) => v === "" || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v), "Choose a valid option")
+  .transform((v) => (v === "" ? null : v));
+
+const optionalEmail = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .max(254)
+  .default("")
+  .refine((v) => v === "" || z.email().safeParse(v).success, "Enter a valid email address");
+
+export const ticketPriority = oneOf(["low", "medium", "high", "critical"] as const, "priority");
+export const ticketStatus = oneOf(
+  ["open", "in_progress", "waiting_customer", "waiting_third_party", "resolved", "closed"] as const,
+  "status",
+);
+
+export const ticketCreateSchema = z.object({
+  subject: requiredText("Subject", 200),
+  description: text(20000).default(""),
+  category: requiredText("Category", 60),
+  priority: ticketPriority,
+  client_id: optionalUuid,
+  requester_id: optionalUuid,
+  requester_name: text(120).default(""),
+  requester_email: optionalEmail,
+  assignee_id: optionalUuid,
+  kb_article_id: optionalUuid,
+});
+export type TicketCreateInput = z.input<typeof ticketCreateSchema>;
+
+export const ticketEditSchema = z.object({
+  subject: requiredText("Subject", 200),
+  description: text(20000).default(""),
+  category: requiredText("Category", 60),
+  requester_id: optionalUuid,
+  requester_name: text(120).default(""),
+  requester_email: optionalEmail,
+});
+
+export const ticketStatusSchema = z
+  .object({ status: ticketStatus, resolution_summary: text(10000).default("") })
+  .refine((v) => v.status !== "resolved" || v.resolution_summary.length > 0, {
+    message: "Describe how the issue was resolved",
+    path: ["resolution_summary"],
+  });
+
+export const commentSchema = z.object({
+  body: requiredText("Message", 20000),
+  is_internal: z.boolean().default(false),
+});
+
+/** Customer-facing ticket form (the portal). Organisation and requester come from the account. */
+export const portalTicketSchema = z.object({
+  subject: requiredText("Subject", 200),
+  description: requiredText("Description", 20000),
+  category: requiredText("Category", 60),
+  priority: ticketPriority,
+});
+
+// --------------------------------------------------------------- clients and SLA
+export const clientSchema = z.object({
+  name: requiredText("Organisation name", 120),
+  email: optionalEmail,
+  phone: text(40).default(""),
+  address: text(500).default(""),
+  primary_contact_name: text(120).default(""),
+  primary_contact_email: optionalEmail,
+  service_notes: text(5000).default(""),
+  notes: text(5000).default(""),
+});
+export type ClientInput = z.input<typeof clientSchema>;
+
+const slaMinutes = z
+  .union([z.number(), z.string(), z.null()])
+  .transform((v) => (v === "" || v === null ? null : Number(v)))
+  .refine((v) => v === null || (Number.isInteger(v) && v >= 1 && v <= 525600), "Use between 1 minute and 365 days, or leave empty for no target");
+
+export const slaSchema = z.object({
+  priority: ticketPriority,
+  first_response_minutes: slaMinutes,
+  resolution_minutes: slaMinutes,
+});
+
+export const customerInviteSchema = z.object({
+  email: z.string().trim().toLowerCase().pipe(z.email("Enter a valid email address")),
+});
+
+export const automationRuleSchema = z
+  .object({
+    name: requiredText("Rule name", 80),
+    match_category: text(60).default(""),
+    match_priority: z.union([ticketPriority, z.literal("")]).default(""),
+    action: oneOf(["assign", "notify"] as const, "action"),
+    target_user_id: z.string().regex(/^[0-9a-f-]{36}$/i, "Choose a team member"),
+    is_active: z.boolean().default(true),
+  })
+  .transform((v) => ({ ...v, match_category: v.match_category || null, match_priority: v.match_priority || null }));

@@ -5,7 +5,13 @@ own Supabase project and after each deployment.
 
 ## 1. Unit tests — `npm test`
 
-26 tests in `tests/unit/` covering the pure logic everything else depends on:
+43 tests in `tests/unit/` covering the pure logic everything else depends on:
+
+- **Ticket workflow**: allowed and blocked status changes, mirroring the database rules; who may reopen.
+- **SLA states**: no target, on track, due soon (last 25%, at least 15 minutes), overdue, met, missed,
+  from stored timestamps only; target formatting.
+- **Service metrics**: compliance counts only targets with a known result; averages; queue; grouping by
+  priority and technician; created/resolved per local day, week and month.
 
 - **Dates and time zones**: calendar validation, month/year rollover, Monday-to-Sunday weeks, local
   midnight in UTC for India, London summer and winter time, invalid-zone fallback, every date format.
@@ -35,12 +41,78 @@ Supabase's `auth` schema) and checks:
 | Anonymous role has no table access and can't call account deletion | Pass |
 | Account deletion removes only the caller's data, across every table | Pass |
 
+### Workspaces and ticketing (`rls_workspaces_test.sql`, `rls_ticketing_test.sql`)
+
+Run on a database that already contains data from before the upgrade, so the migrations are tested
+against real old rows. The ticketing suite uses one organisation with an owner, two technicians, two
+customers of different clients, a second workspace and an outsider:
+
+| Check | Result |
+|---|---|
+| Existing users and records are backfilled without loss; legacy users keep access | Pass |
+| Invitations are hashed, single-use, bound to the invited email; roles can't be escalated | Pass |
+| New workspaces get default SLA targets | Pass |
+| Tickets get unique per-workspace numbers (`NW-00001`), always start Open, get SLA deadlines | Pass |
+| Customers can only raise tickets for their own organisation; staff-only fields are ignored | Pass |
+| Organisations, clients, other workspaces and outsiders can't see each other's tickets | Pass |
+| **Internal notes are invisible to customers**, and customers can't write them | Pass |
+| Customers see public history but not assignment changes | Pass |
+| Comments can't be edited or deleted; tickets can't be deleted | Pass |
+| Status changes follow the workflow; resolving needs a summary; only admins reopen closed tickets | Pass |
+| Ticket number, workspace, creator and timestamps can't be changed | Pass |
+| A customer reply reopens a resolved ticket; customers can't change tickets | Pass |
+| Notifications reach the right people, never the person who acted, never another user | Pass |
+| SLA breaches are recorded and alerted once, however often the sweep runs | Pass |
+| Client SLA overrides and priority changes recalculate deadlines; only admins edit targets | Pass |
+| Automation assigns and notifies; history credits the rule; only admins manage rules | Pass |
+| Knowledge base visibility: Private (author only), Team (staff), Public (that workspace's customers, never outsiders) | Pass |
+| Tickets can only link articles from their own workspace | Pass |
+| Client-technician assignments are admin-only and audited | Pass |
+| Platform overview is limited to platform owners | Pass |
+| Ticket creation is rate-limited (60 per user per hour) | Pass |
+| Deleting a technician or a customer keeps tickets and history; deleting a workspace removes only its data | Pass |
+
+**44 database checks in total, all passing.** The ticketing migration's rollback script was also
+tested: up, down, up again, keeping workspaces and personal data.
+
 ## 3. End-to-end browser tests
 
 The production build (`next build && next start`) was driven in headless Chromium against a
 Supabase-compatible backend: the real migration on PostgreSQL 16, real PostgREST v12 (the data API
 Supabase runs), and a minimal GoTrue-compatible auth service issuing Supabase-style JWTs.
-**69 checks, all passing.** They include:
+**115 checks across five suites, all passing, with every migration applied** (latest run: 24 Oct 2026).
+
+### ITSM upgrade: multiple users and organisations (29 checks)
+
+Five people in separate browser sessions: an owner, a technician, a customer of client Alpha, a
+customer of client Beta, and the owner of an unrelated workspace.
+
+- **Setup**: owner creates an organisation, adds two clients, invites a technician from the Team page and
+  one customer per client; customers land in the branded portal for their own organisation.
+- **Configuration**: SLA target changed in settings and applied to new tickets; automation rule assigns
+  Printers tickets; technicians are kept out of Team and Workspace settings.
+- **Ticket lifecycle**: a customer raises a request in the portal, it's auto-assigned and the technician
+  is notified; internal note plus public reply; **the customer sees the reply but never the internal
+  note**; the customer's reply moves it back to In progress; resolving requires a summary, which the
+  customer then sees.
+- **Separation**: the other client's customer can't see or open the request ("Page not found");
+  customers are redirected away from every staff page; the staff CSV export refuses customers; the
+  unrelated workspace sees none of the tickets, clients, articles or notifications.
+- **Staff tools**: ticket logged on behalf of a customer; critical tickets get the 30-minute target;
+  board offers only allowed status moves; technicians close but can't reopen closed tickets, the owner
+  can; search by ticket number, priority filter, SLA sort.
+- **Knowledge base**: article drafted from a ticket, marked Public, linked back to the ticket and visible
+  to both clients' customers; a Private article is hidden from the owner and customers.
+- **Figures**: overview and reports totals match the saved tickets, including a client filter; CSV export
+  includes SLA results; deactivating a client hides it from new tickets but customers keep access to
+  existing ones.
+- **Personal workspace** unaffected; **phone layout**: 14 staff and portal pages checked at 390px on a
+  fresh load; **no browser errors** in any session.
+
+### Original features, re-run after the upgrade (86 checks)
+
+Everything below still passes. Two checks were updated for deliberate changes (the knowledge base
+menu item was renamed from Troubleshooting; team invitations moved to the Team page).
 
 - **Auth**: protected routes redirect to sign-in and return afterwards; client-side validation;
   sign-up, sign-in, wrong password, sign-out; email confirmation link; reused link rejected; password
@@ -68,6 +140,12 @@ Supabase runs), and a minimal GoTrue-compatible auth service issuing Supabase-st
 Bugs these tests found and fixed before release: demo data failed to load because bulk inserts sent
 `NULL` instead of column defaults; knowledge-base sections showed raw Markdown; the task table squeezed
 titles; the mobile dashboard overflowed the screen width.
+
+Bugs found by the upgrade's tests and fixed before handing over: a shared database check read a column
+that only one of its tables had (automation rules couldn't be saved); deleting a technician's or
+customer's account was blocked by ticket history; ticket history credited the customer for an
+automatic assignment; the ticket list and SLA settings made phones zoom the whole page out; the
+overview's activity feed ignored its filters.
 
 The browser harness isn't included in the repo because it depends on a local PostgREST binary and a
 bundled Chromium; the manual checklist below covers the same ground on a real Supabase project.
@@ -104,6 +182,17 @@ Run this on your own Supabase project locally, and again on the Vercel deploymen
 - [ ] Load demo data (items show a Demo badge), then remove it; your own items remain.
 - [ ] Export all data and open the JSON.
 - [ ] Toggle light/dark; reload and the choice is kept.
+
+### Service desk (after running the ticketing migration)
+- [ ] Create an organisation workspace, add two clients, invite a technician (Team) and one customer per client.
+- [ ] As a customer, raise a request in the portal; it appears in Tickets and the technician is notified.
+- [ ] Add an internal note and a public reply; the customer sees only the reply.
+- [ ] Sign in as the other client's customer: the request isn't listed and its URL shows "Page not found".
+- [ ] Try Open → Closed from the board: not offered. Resolve without a summary: refused.
+- [ ] As a technician, close a resolved ticket; you can't reopen it, an admin can.
+- [ ] Change an SLA target in Workspace settings; a new ticket of that priority uses it.
+- [ ] Mark an article Public; customers see it under Help articles. A Private one stays hidden.
+- [ ] Overview and Reports numbers match the tickets you created; CSV export downloads.
 
 ### Security
 - [ ] Create a second account in a private window: it sees none of the first account's data.

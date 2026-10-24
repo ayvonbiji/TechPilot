@@ -14,8 +14,10 @@ only when you merge it. Database changes go to a **staging** Supabase project fi
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Vercel *Preview* | **Staging** publishable key |
 | `NEXT_PUBLIC_SITE_URL` | Vercel *Preview* | Leave empty; the app uses the preview's own address |
 
-No secret or service-role key is used anywhere. Email notifications (later phase) will add provider
-variables, documented when that phase lands.
+No secret or service-role key is used anywhere. This release sends **no email notifications**:
+notifications appear in the app only, and the app says so. Account emails (sign-up confirmation,
+password reset, invitations you copy yourself) are sent by Supabase Auth; configure SMTP under
+Supabase → Authentication → Emails for anything beyond light use.
 
 ## One-time: set up staging
 
@@ -60,3 +62,31 @@ works with the current live app, so there's no downtime window.
 |---|---|---|---|
 | `20261023000000_initial_schema.sql` | Original app | Tables, RLS, account deletion | — |
 | `20261024000000_workspaces.sql` | 2 | Workspaces, members, roles, clients (basic), invitations, audit log; personal workspace per user; knowledge base and notes become workspace-aware | `supabase/rollbacks/20261024000000_workspaces_down.sql` |
+| `20261025000000_ticketing.sql` | 3–5 | Tickets with per-workspace numbers, comments (public/internal), ticket history, SLA policies with client overrides and default targets for every workspace, notifications, automation rules, client contact fields and technicians, knowledge-base summary/problem/visibility and new categories (old ones still valid), platform overview, audit of client/SLA/automation changes | `supabase/rollbacks/20261025000000_ticketing_down.sql` |
+
+Run them in this order. `20261025…` needs `20261024…`. Both are additive: existing rows are
+backfilled, nothing is dropped, and existing knowledge-base articles become **Team** visibility,
+which is exactly how they're shared today.
+
+## Optional: SLA alerts without anyone opening the app
+
+Due-soon and overdue notifications are raised whenever staff open the Overview, Tickets or
+Notifications pages. To raise them on a schedule as well, enable the **pg_cron** extension
+(Supabase → Database → Extensions) and run once in the SQL Editor:
+
+```sql
+select cron.schedule('techpilot-sla-sweep', '*/10 * * * *', $$select public.sla_sweep_all()$$);
+```
+
+Remove it with `select cron.unschedule('techpilot-sla-sweep');`. The sweep never sends duplicate
+notifications for the same ticket and deadline.
+
+## Making yourself platform owner
+
+The **Platform overview** page lists every workspace with counts only. Grant it in SQL; there is
+deliberately no button for this:
+
+```sql
+insert into public.platform_admins (user_id)
+select id from auth.users where email = 'you@example.com';
+```

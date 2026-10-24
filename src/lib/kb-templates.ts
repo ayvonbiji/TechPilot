@@ -34,7 +34,7 @@ export const KB_TEMPLATES: KbTemplate[] = [
     name: "Network connectivity",
     description: "No internet, limited connectivity, or can't reach a resource.",
     values: {
-      category: "Networking",
+      category: "Networking and TCP/IP",
       symptoms: "- Connection type (Wi-Fi / Ethernet):\n- Can reach local resources? Internet?\n- Error shown:",
       possible_causes: "- Physical layer (cable, port, adapter disabled)\n- No valid IP address (DHCP)\n- DNS resolution failing\n- Gateway or upstream issue",
       diagnostic_steps:
@@ -48,7 +48,7 @@ export const KB_TEMPLATES: KbTemplate[] = [
     name: "Printer issue",
     description: "Jobs stuck, printer offline, or poor print quality.",
     values: {
-      category: "Printers and scanners",
+      category: "Printers and peripherals",
       symptoms: "- Printer model (generic):\n- Connection (USB / network):\n- What happens when printing:",
       possible_causes: "- Print spooler stuck\n- Driver missing or wrong version\n- Printer offline / wrong port\n- Hardware (paper, toner, jam)",
       diagnostic_steps:
@@ -76,7 +76,7 @@ export const KB_TEMPLATES: KbTemplate[] = [
     name: "Software installation",
     description: "An application won't install, update or open.",
     values: {
-      category: "Software installation",
+      category: "General IT support",
       symptoms: "- Application and version:\n- Step where it fails:\n- Error code/message:",
       possible_causes: "- Missing admin rights\n- Missing prerequisite (runtime, framework)\n- Insufficient disk space\n- Blocked by security software or policy",
       diagnostic_steps: "1. Note the exact error\n2. Check disk space and prerequisites\n3. Check installer logs\n4. Try installing with appropriate permissions",

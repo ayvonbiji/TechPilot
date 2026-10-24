@@ -8,8 +8,8 @@ import "./globals.css";
 import { Providers } from "@/components/layout/providers";
 
 export const metadata: Metadata = {
-  title: { default: "IT Engineer Companion", template: "%s – IT Engineer Companion" },
-  description: "A private organiser for IT support work: tasks, troubleshooting notes, commands, daily logs and learning.",
+  title: { default: "TechPilot", template: "%s – TechPilot" },
+  description: "IT service desk and personal workspace: tickets, clients, knowledge base, SLAs, reports and your own tasks and learning.",
   robots: { index: false, follow: false },
 };
 

@@ -154,3 +154,13 @@ export function greetingFor(tz?: string): string {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
+
+/** ISO timestamp for N days before now. */
+export function isoDaysAgo(days: number): string {
+  return new Date(Date.now() - days * 86_400_000).toISOString();
+}
+
+/** Current time in ms. A function so server components can take one consistent reading. */
+export function nowMs(): number {
+  return Date.now();
+}

@@ -23,18 +23,41 @@ export const TASK_CATEGORIES = [
   "Practice lab",
 ] as const;
 
+// Knowledge-base categories. Mirrors the CHECK in the ticketing migration.
 export const KB_CATEGORIES = [
   "Windows troubleshooting",
+  "Computer hardware concepts",
+  "Networking and TCP/IP",
+  "DNS and DHCP",
+  "Printers and peripherals",
+  "Windows Server",
+  "Active Directory and Group Policy",
+  "Microsoft 365",
+  "Linux",
+  "Cloud fundamentals",
+  "Cybersecurity",
+  "General IT support",
+] as const;
+
+/** Earlier categories: still valid for existing articles, not offered for new ones. */
+export const LEGACY_KB_CATEGORIES = [
   "Hardware and peripherals",
   "Networking",
   "TCP/IP, DNS and DHCP",
   "Printers and scanners",
   "Software installation",
-  "Microsoft 365",
   "Windows Server and Active Directory",
   "Remote support",
   "Basic cybersecurity",
   "Other technical issues",
+] as const;
+
+export const ALL_KB_CATEGORIES = [...KB_CATEGORIES, ...LEGACY_KB_CATEGORIES] as const;
+
+export const KB_VISIBILITY = [
+  { value: "private", label: "Private", hint: "Only you" },
+  { value: "workspace", label: "Team", hint: "Technicians and admins in this workspace" },
+  { value: "public", label: "Public", hint: "Also your customers, in the client portal" },
 ] as const;
 
 export const KB_STATUSES = [

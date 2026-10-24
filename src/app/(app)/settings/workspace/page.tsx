@@ -9,14 +9,10 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { Building2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  DeleteWorkspacePanel,
-  GeneralSettings,
-  InvitePanel,
-  MembersPanel,
-  type PendingInvite,
-  type RosterRow,
-} from "@/components/settings/workspace-admin";
+import { DeleteWorkspacePanel, GeneralSettings, type RosterRow } from "@/components/settings/workspace-admin";
+import { AutomationRules, type RuleRow } from "@/components/settings/automation-rules";
+import { SlaEditor } from "@/components/clients/sla-editor";
+import { getSlaRows } from "@/lib/ticket-data";
 
 export const metadata: Metadata = { title: "Workspace settings" };
 
@@ -28,10 +24,21 @@ const ACTION_LABELS: Record<string, string> = {
   "member.role_changed": "changed a member's role",
   "member.removed": "removed a member",
   "member.left": "left the workspace",
+  "clients.insert": "added a client",
+  "clients.update": "updated a client",
+  "clients.delete": "deleted a client",
+  "sla_policies.insert": "added an SLA target",
+  "sla_policies.update": "changed an SLA target",
+  "sla_policies.delete": "removed an SLA override",
+  "automation_rules.insert": "added an automation rule",
+  "automation_rules.update": "changed an automation rule",
+  "automation_rules.delete": "deleted an automation rule",
+  "client_technicians.insert": "assigned a technician to a client",
+  "client_technicians.delete": "removed a technician from a client",
 };
 
 export default async function WorkspaceSettingsPage() {
-  const user = await requireUser();
+  await requireUser();
   const profile = await getProfile();
   const { workspace, role } = await requireWorkspaceAdmin();
 
@@ -52,16 +59,10 @@ export default async function WorkspaceSettingsPage() {
   }
 
   const supabase = await createClient();
-  const [rosterRes, invitesRes, auditRes] = await Promise.all([
+  const [rosterRes, rulesRes, slaRows, auditRes] = await Promise.all([
     supabase.rpc("workspace_roster", { ws: workspace.id }),
-    supabase
-      .from("invitations")
-      .select("id,email,role,expires_at,created_at")
-      .eq("workspace_id", workspace.id)
-      .is("accepted_at", null)
-      .is("revoked_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false }),
+    supabase.from("automation_rules").select("id,name,is_active,match_category,match_priority,action,target_user_id").eq("workspace_id", workspace.id).order("position"),
+    getSlaRows(workspace.id),
     supabase.from("audit_log").select("id,action,details,created_at,actor_id").eq("workspace_id", workspace.id).order("created_at", { ascending: false }).limit(25),
   ]);
   const roster = (rosterRes.data ?? []) as RosterRow[];
@@ -73,10 +74,25 @@ export default async function WorkspaceSettingsPage() {
       <PageHeader title="Workspace settings" description={`${workspace.name}, ${TYPE_LABELS[workspace.type].toLowerCase()} workspace`} />
       <div className="space-y-6">
         <GeneralSettings ws={workspace} />
-        <InvitePanel myRole={role} pendingInvites={(invitesRes.data ?? []) as PendingInvite[]} />
-        <MembersPanel roster={roster} me={user.id} myRole={role} />
         <Panel>
-          <PanelHeader title="Activity" description="Recent membership and settings changes" />
+          <PanelHeader
+            title="Team"
+            description="Invite technicians and administrators, and change roles."
+            action={<Button asChild variant="secondary" size="sm"><Link href="/team">Manage team</Link></Button>}
+          />
+        </Panel>
+        <Panel>
+          <PanelHeader title="SLA targets" description="Defaults for every ticket by priority. Calendar time (24×7); override them per client on the client's page. Changes apply to new tickets and to priority changes." />
+          <SlaEditor rows={slaRows} clientId={null} canEdit />
+        </Panel>
+        <Panel>
+          <PanelHeader title="Automation" description="Assign or notify automatically when tickets are created." />
+          <div className="p-5">
+            <AutomationRules rules={(rulesRes.data ?? []) as RuleRow[]} staff={roster.filter((r) => r.role !== "client").map((r) => ({ id: r.user_id, name: r.display_name || r.email }))} />
+          </div>
+        </Panel>
+        <Panel>
+          <PanelHeader title="Activity" description="Recent membership, client and settings changes" />
           {(auditRes.data ?? []).length ? (
             <ul className="divide-y divide-border">
               {(auditRes.data ?? []).map((a: { id: number; action: string; details: Record<string, string>; created_at: string; actor_id: string | null }) => (

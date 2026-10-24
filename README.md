@@ -1,25 +1,36 @@
-# IT Engineer Companion
+# TechPilot
 
-A private, long-term work organiser and technical learning platform for IT support work.
-Plan tasks, document troubleshooting from symptoms to verified fix, keep a command library,
-write a daily work log, generate honest daily and weekly reports, and track the skills and
-certifications on your path into networking, systems administration, cloud and security.
+An IT service desk and personal workspace in one. Run support for multiple client organisations with
+tickets, SLAs, a customer portal, a shared knowledge base and reports, and keep your own tasks, work
+log, notes and learning plan in a private workspace that stays yours when you change jobs.
 
-Everything you save belongs to your account alone, enforced by Row Level Security in the database.
+Every workspace's data is separated in the database by Row Level Security, not just hidden in the
+interface. Customers only ever see their own organisation's requests and never internal notes.
 
 ## Features
 
+**Service desk** (freelance and organisation workspaces)
+
 | Area | What you can do |
 |---|---|
-| **Dashboard** | Greeting and date, tasks due today and overdue, pending/in-progress/completed counts, 7-day productivity chart, recent troubleshooting, skills in progress, quick actions. All figures come from your saved data. |
-| **My tasks** | Create, edit, delete; priority and status; due dates with overdue highlighting; one-click complete; search, filter by status/priority/due/category, five sort orders; completion notes and statistics. |
-| **Troubleshooting** | Knowledge base across 11 categories with symptoms, causes, diagnostic steps, commands, solution, verification, lessons and tags. Seven templates. Privacy confirmation before saving. Full-text search plus exact matching for command switches like `/flushdns`. Copy as Markdown. |
-| **Notes & commands** | Markdown notebook with write/preview, code blocks with copy buttons, categories, tags, favourites and search. One-click import of reference notes for `ipconfig`, `ping`, `tracert`, `nslookup`, `netstat`, `sfc /scannow`, `DISM` and PowerShell basics, each with purpose, examples and precautions. Nothing is ever executed. |
-| **Work log** | One entry per day covering tasks, problems, outcomes, skills, challenges, follow-ups and reflections. Month calendar with logged-day lights and a chronological history. Search across all entries. |
-| **Reports** | Daily and weekly summaries built only from saved tasks, logs and records; empty sections say "Nothing recorded". Weekly statistics and per-day breakdown. Preview, edit, reset, copy, download as Markdown, print, and export tasks as CSV. |
-| **Learning tracker** | Skills and certifications across a 10-stage roadmap with current and target proficiency (0–5), status, notes, resources and completion date. Overall and per-stage progress. |
-| **Resources** | Bookmarks by category with notes. Optional set of seven recommended links (each verified to exist). |
-| **Settings** | Display name, theme (light/dark/system), time zone, date and time formats, password change, demo data load/remove, full JSON export, backup guidance, sign out, account deletion. |
+| **Overview** | Live queue (open, in progress, waiting, overdue, due soon, resolved, closed), created/resolved trend, averages and SLA compliance for a date range, your assigned tickets, recent activity. Filter by client, technician and status. All figures come from saved tickets. |
+| **Tickets** | Numbered per workspace (`NW-00001`). Table and Kanban board, search, filters, sorting, pagination, views for mine/unassigned/due soon/overdue. Detail page with public replies and staff-only internal notes, full history, assignment, priority, status workflow enforced by the database, resolution summary, linked knowledge article, printable. |
+| **Clients** | Organisation profiles, primary contact, service settings, portal accounts, assigned technicians, per-client SLA overrides, deactivation. |
+| **Customer portal** | Separate branded interface: raise requests, see the organisation's requests, reply, read resolutions and Public help articles, get updates. |
+| **Knowledge base** | Articles with summary, problem, symptoms, causes, diagnosis, solution and verification. Private, Team or Public. Draft an article straight from a resolved ticket. |
+| **Reports** | Created vs resolved (daily/weekly/monthly), first-response and resolution averages, SLA compliance, by priority, category, technician and client. CSV export and print/PDF. |
+| **SLA** | Response and resolution targets per priority with client overrides. Due-soon and overdue alerts. Deadlines are calendar time (24×7) and are labelled as such. |
+| **Notifications** | In-app centre with unread counts for assignments, replies, status and priority changes, SLA warnings and breaches. No duplicates. (No email in this version.) |
+| **Automation** | Assign or notify by category and priority when tickets are created. |
+| **Team** | Invite technicians and admins, change roles, see workload. Every membership, client, SLA and automation change is in the activity log. |
+
+**Personal workspace**: tasks, daily work log, work summaries, notes and command library, learning and
+certification tracker, bookmarks, and your own tickets and knowledge base.
+
+**Roles**: Platform owner (granted in SQL), workspace owner and administrator, technician, customer.
+Each sees only the menu items and data their role allows, enforced on the server and in the database.
+
+Not included in this release: billing and invoicing, IT asset inventory, email notifications.
 
 ## Tech stack
 
@@ -34,10 +45,9 @@ Architecture, folder structure and the full database schema are in
 ## 1. Set up Supabase
 
 1. Create a free project at [supabase.com](https://supabase.com). Choose a strong database password and a region near you.
-2. Open **SQL Editor → New query**, paste the whole of
-   [`supabase/migrations/20261023000000_initial_schema.sql`](supabase/migrations/20261023000000_initial_schema.sql)
-   and click **Run**. This creates all tables, indexes, triggers, Row Level Security policies
-   and the account-deletion function.
+2. Open **SQL Editor → New query** and run each file in [`supabase/migrations/`](supabase/migrations/)
+   **in filename order**, one at a time. This creates all tables, indexes, triggers and Row Level Security
+   policies. Upgrading an existing installation? See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) first.
    - Using the Supabase CLI instead? `supabase link --project-ref <ref>` then `supabase db push`.
 3. Open **Authentication → URL Configuration**:
    - **Site URL**: `http://localhost:3000` for now (change it to your Vercel URL after deploying).
@@ -98,7 +108,7 @@ Changing an environment variable on Vercel requires a redeploy to take effect.
 | `npm run build` / `npm start` | Production build / serve it |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript, no emit |
-| `npm test` | Unit tests (dates and time zones, report building, CSV safety, validation) |
+| `npm test` | Unit tests: ticket workflow, SLA states, service metrics, dates and time zones, reports, CSV safety, validation |
 | `npm run test:rls` | Applies the migration to a throwaway database on a local PostgreSQL and runs the RLS isolation tests. Set `PGHOST`, `PGPORT`, `PGUSER` first. |
 
 ## Security model

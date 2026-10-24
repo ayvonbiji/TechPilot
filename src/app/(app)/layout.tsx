@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Bell } from "lucide-react";
 import { getProfile, requireUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentMembership, getMemberships, isStaffRole } from "@/lib/workspace";
 import { SidebarContent } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -9,8 +12,17 @@ import { UserMenu } from "@/components/layout/user-menu";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
   const [profile, memberships, current] = await Promise.all([getProfile(), getMemberships(), getCurrentMembership()]);
-  // Client users work in the simplified client portal, never in the staff app.
+  // Customer accounts work in the simplified client portal, never in the staff app.
   if (!isStaffRole(current.role)) redirect("/portal");
+
+  const supabase = await createClient();
+  const [unreadRes, platformRes] = await Promise.all([
+    supabase.from("notifications").select("id", { count: "exact", head: true }).is("read_at", null),
+    supabase.from("platform_admins").select("user_id").eq("user_id", user.id).maybeSingle(),
+  ]);
+  const unread = unreadRes.count ?? 0;
+  const platformAdmin = Boolean(platformRes.data);
+
   const workspaces = memberships.map((m) => ({
     id: m.workspace.id,
     name: m.workspace.name,
@@ -29,11 +41,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         Skip to content
       </a>
       <aside className="no-print fixed inset-y-0 left-0 hidden w-64 lg:block">
-        <SidebarContent workspaces={workspaces} currentId={current.workspace.id} />
+        <SidebarContent workspaces={workspaces} currentId={current.workspace.id} unread={unread} platformAdmin={platformAdmin} />
       </aside>
       <header className="no-print sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-background/85 px-4 backdrop-blur sm:px-6 lg:px-8">
-        <MobileNav workspaces={workspaces} currentId={current.workspace.id} />
+        <MobileNav workspaces={workspaces} currentId={current.workspace.id} unread={unread} platformAdmin={platformAdmin} />
         <div className="flex-1" />
+        <Link
+          href="/notifications"
+          className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface-2 hover:text-foreground"
+          aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+        >
+          <Bell className="h-4.5 w-4.5" aria-hidden />
+          {unread > 0 && <span className="led absolute right-2 top-2 text-accent" aria-hidden />}
+        </Link>
         <ThemeToggle />
         <UserMenu name={profile.display_name} email={user.email} />
       </header>

@@ -40,6 +40,10 @@
   --code-bg: #0f1a2b;
   --code-fg: #dbe5f3;
 
+  /* Chart series (validated for contrast and colour-blind separation) */
+  --series-1: #2f5bea;
+  --series-2: #c2410c;
+
   --shadow-panel: 0 1px 2px rgb(16 32 56 / 0.05), 0 1px 0 rgb(16 32 56 / 0.02);
   --shadow-pop: 0 12px 32px -8px rgb(16 32 56 / 0.25), 0 2px 6px rgb(16 32 56 / 0.08);
 }
@@ -77,6 +81,9 @@
 
   --code-bg: #070e1a;
   --code-fg: #dbe5f3;
+
+  --series-1: #5b7ffb;
+  --series-2: #e8682a;
 
   --shadow-panel: 0 1px 0 rgb(0 0 0 / 0.2);
   --shadow-pop: 0 16px 40px -10px rgb(0 0 0 / 0.6);

@@ -11,6 +11,8 @@ export interface FilterDef {
   name: string;
   label: string;
   options: readonly { value: string; label: string }[];
+  /** Text for the "no filter" option; defaults to "<label>: all". */
+  emptyLabel?: string;
 }
 
 /**
@@ -22,7 +24,9 @@ export function FilterBar({
   filters = [],
   sort,
   className,
+  search = true,
 }: {
+  search?: boolean;
   searchPlaceholder?: string;
   filters?: FilterDef[];
   sort?: FilterDef;
@@ -64,7 +68,7 @@ export function FilterBar({
 
   return (
     <div className={cn("no-print flex flex-col gap-2 lg:flex-row lg:items-center", className)} aria-busy={pending}>
-      <div className="relative flex-1">
+      {search && (<div className="relative flex-1">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-subtle" aria-hidden />
         <Input
           type="search"
@@ -75,7 +79,7 @@ export function FilterBar({
           className="pl-9"
           maxLength={100}
         />
-      </div>
+      </div>)}
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {filters.map((f) => (
           <Select
@@ -85,7 +89,7 @@ export function FilterBar({
             onChange={(e) => setParam(f.name, e.target.value)}
             className="sm:w-auto sm:min-w-36"
           >
-            <option value="">{f.label}: all</option>
+            <option value="">{f.emptyLabel ?? `${f.label}: all`}</option>
             {f.options.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
